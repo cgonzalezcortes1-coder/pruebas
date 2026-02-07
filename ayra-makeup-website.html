@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayra Makeup Artist - Maquillaje Profesional & Novias</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --coral-pink: #f5b5b5;
+            --soft-pink: #f9e5e8;
+            --cream: #fdfbf9;
+            --charcoal: #1a1a1a;
+            --warm-gray: #666666;
+            --accent-rose: #fce8ec;
+            --light-pink: #fef7f8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--charcoal);
+            background: var(--cream);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1.5rem 5%;
+            border-bottom: 1px solid rgba(245, 181, 181, 0.3);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Allura', cursive;
+            font-size: 2.5rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: var(--charcoal);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0;
+            line-height: 1;
+        }
+
+        .logo-text {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .logo-heart {
+            font-size: 1rem;
+            color: var(--charcoal);
+            margin-top: -10px;
+        }
+
+        .logo-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.55rem;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: -8px;
+        }
+
+        .logo img {
+            height: 50px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--charcoal);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            font-weight: 400;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--coral-pink);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--light-pink) 0%, var(--cream) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 181, 181, 0.2) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(249, 229, 232, 0.4) 0%, transparent 70%);
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, -30px) scale(1.1); }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeInUp 1.2s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+        }
+
+        .hero h1 {
+            font-family: 'Allura', cursive;
+            font-size: 5.5rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            margin-bottom: 1rem;
+            color: var(--charcoal);
+        }
+
+        .hero .tagline {
+            font-size: 0.95rem;
+            letter-spacing: 4px;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .hero .hero-subtitle {
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: var(--warm-gray);
+            margin-bottom: 3rem;
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 3rem;
+            background: var(--coral-pink);
+            color: white;
+            text-decoration: none;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            background: #f7a0a0;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 181, 181, 0.4);
+        }
+
+        /* Section Styles */
+        section {
+            padding: 8rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3rem;
+            font-weight: 300;
+            text-align: center;
+            margin-bottom: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--warm-gray);
+            font-size: 1.1rem;
+            margin-bottom: 4rem;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        /* Services */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .service-card {
+            background: white;
+            padding: 3rem 2.5rem;
+            border: 1px solid rgba(245, 181, 181, 0.3);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--coral-pink), var(--accent-rose));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+            transform-origin: left;
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-icon {
+            font-family: 'Allura', cursive;
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+            color: var(--coral-pink);
+            font-weight: 400;
+        }
+
+        .service-card h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .service-card p {
+            color: var(--warm-gray);
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .service-card ul {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .service-card li {
+            padding: 0.5rem 0;
+            color: var(--warm-gray);
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .service-card li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--coral-pink);
+        }
+
+        /* About */
+        .about {
+            background: linear-gradient(135deg, var(--light-pink) 0%, var(--soft-pink) 100%);
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about-content p {
+            font-size: 1.1rem;
+            line-height: 2;
+            color: var(--warm-gray);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Gallery */
+        .gallery {
+            background: white;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 3/4;
+            overflow: hidden;
+            border: 1px solid rgba(245, 181, 181, 0.3);
+            background: var(--light-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-placeholder {
+            text-align: center;
+            color: var(--warm-gray);
+        }
+
+        .gallery-placeholder p {
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        /* Contact Form */
+        .contact {
+            background: white;
+        }
+
+        .form-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--light-pink);
+            padding: 4rem;
+            border: 1px solid rgba(245, 181, 181, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            color: var(--charcoal);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid rgba(245, 181, 181, 0.4);
+            background: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--coral-pink);
+            box-shadow: 0 0 0 3px rgba(245, 181, 181, 0.15);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: var(--coral-pink);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.4s ease;
+        }
+
+        .submit-btn:hover {
+            background: #f7a0a0;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 181, 181, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--charcoal);
+            color: white;
+            text-align: center;
+            padding: 3rem 5%;
+        }
+
+        .social-links {
+            margin-bottom: 1.5rem;
+        }
+
+        .social-links a {
+            color: var(--coral-pink);
+            text-decoration: none;
+            margin: 0 1rem;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: white;
+        }
+
+        footer p {
+            color: var(--warm-gray);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .nav-links {
+                gap: 1.5rem;
+                font-size: 0.8rem;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-container {
+                padding: 2rem;
+            }
+
+            section {
+                padding: 5rem 5%;
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <div class="logo">
+                <div class="logo-text">
+                    <span>ayra</span>
+                    <span class="logo-heart">♥</span>
+                </div>
+                <div class="logo-subtitle">MAKEUP ARTIST</div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#servicios">SERVICIOS</a></li>
+                <li><a href="#sobre-mi">SOBRE MÍ</a></li>
+                <li><a href="#galeria">GALERÍA</a></li>
+                <li><a href="#contacto">CONTACTO</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>ayra ♥</h1>
+            <p class="tagline">MAKEUP ARTIST</p>
+            <p class="hero-subtitle">Colorea tu momento</p>
+            <a href="#contacto" class="cta-button">AGENDA TU CITA</a>
+        </div>
+    </section>
+
+    <section id="servicios">
+        <h2 class="section-title">Servicios</h2>
+        <p class="section-subtitle">Especializada en crear looks inolvidables para tu día especial</p>
+        
+        <div class="services-grid">
+            <div class="service-card fade-in">
+                <span class="service-icon">N</span>
+                <h3>Maquillaje de Novias</h3>
+                <p>Tu día más especial merece un maquillaje perfecto que perdure desde el "sí quiero" hasta el último baile.</p>
+                <ul>
+                    <li>Prueba de maquillaje previa</li>
+                    <li>Productos de larga duración</li>
+                    <li>Atención personalizada</li>
+                    <li>Looks naturales o dramáticos</li>
+                </ul>
+            </div>
+
+            <div class="service-card fade-in">
+                <span class="service-icon">P</span>
+                <h3>Maquillaje Profesional</h3>
+                <p>Para eventos, sesiones fotográficas, fiestas y ocasiones especiales que requieren un look impecable.</p>
+                <ul>
+                    <li>Eventos corporativos</li>
+                    <li>Sesiones de fotos</li>
+                    <li>Graduaciones</li>
+                    <li>Cenas y galas</li>
+                </ul>
+            </div>
+
+            <div class="service-card fade-in">
+                <span class="service-icon">S</span>
+                <h3>Maquillaje Social</h3>
+                <p>El toque perfecto para cualquier ocasión especial, desde cumpleaños hasta cocktails.</p>
+                <ul>
+                    <li>Fiestas y celebraciones</li>
+                    <li>Cumpleaños especiales</li>
+                    <li>Citas importantes</li>
+                    <li>Looks de día y noche</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="sobre-mi" class="about">
+        <h2 class="section-title">Sobre Mí</h2>
+        <div class="about-content fade-in">
+            <p>
+                Soy Ayra, makeup artist profesional apasionada por resaltar la belleza única de cada mujer. 
+                Con años de experiencia en la industria, me especializo en crear looks que no solo lucen hermosos, 
+                sino que también reflejan la personalidad y esencia de cada cliente.
+            </p>
+            <p>
+                Mi filosofía es simple: el maquillaje debe hacerte sentir más segura, más radiante y completamente tú misma. 
+                Ya sea para el día más importante de tu vida o para una ocasión especial, mi objetivo es que te veas 
+                y te sientas absolutamente increíble.
+            </p>
+        </div>
+    </section>
+
+    <section id="galeria" class="gallery">
+        <h2 class="section-title">Galería</h2>
+        <p class="section-subtitle">Novias satisfechas que confiaron en mí para su día especial</p>
+        
+        <div class="gallery-grid">
+            <div class="gallery-item fade-in">
+                <div class="gallery-placeholder">
+                    <p>Sample Image</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item fade-in">
+                <div class="gallery-placeholder">
+                    <p>Sample Image</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item fade-in">
+                <div class="gallery-placeholder">
+                    <p>Sample Image</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item fade-in">
+                <div class="gallery-placeholder">
+                    <p>Sample Image</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item fade-in">
+                <div class="gallery-placeholder">
+                    <p>Sample Image</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item fade-in">
+                <div class="gallery-placeholder">
+                    <p>Sample Image</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacto" class="contact">
+        <h2 class="section-title">Agenda tu Cita</h2>
+        <p class="section-subtitle">Cuéntame sobre tu evento y creemos juntas el look perfecto</p>
+        
+        <div class="form-container fade-in">
+            <form id="contactForm">
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo *</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono *</label>
+                    <input type="tel" id="telefono" name="telefono" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="servicio">Tipo de Servicio *</label>
+                    <select id="servicio" name="servicio" required>
+                        <option value="">Selecciona un servicio</option>
+                        <option value="novia">Maquillaje de Novia</option>
+                        <option value="profesional">Maquillaje Profesional</option>
+                        <option value="social">Maquillaje Social</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha">Fecha del Evento</label>
+                    <input type="date" id="fecha" name="fecha">
+                </div>
+
+                <div class="form-group">
+                    <label for="mensaje">Cuéntame sobre tu evento *</label>
+                    <textarea id="mensaje" name="mensaje" required placeholder="Describe el tipo de evento, el look que tienes en mente, y cualquier detalle que creas importante..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">ENVIAR SOLICITUD</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="social-links">
+            <a href="https://www.instagram.com/ayramakeupartist/" target="_blank">📷 Instagram</a>
+        </div>
+        <p>© 2024 Ayra Makeup Artist. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Form submission
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Here you would typically send the form data to a server
+            // For now, we'll just show a confirmation message
+            alert('¡Gracias por tu interés! Te contactaré pronto para confirmar tu cita.');
+            this.reset();
+        });
+    </script>
+</body>
+</html>
