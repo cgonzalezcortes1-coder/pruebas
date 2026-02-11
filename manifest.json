@@ -1,8 +1,8 @@
 {
-  "name": "Tareas de Pablo",
-  "short_name": "Tareas Pablo",
-  "description": "App de tareas diarias para Pablo",
-  "start_url": "tareas-pablo.html",
+  "name": "KAIZEN",
+  "short_name": "KAIZEN",
+  "description": "100 Dias de progreso",
+  "start_url": "6_kaizen.html",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
