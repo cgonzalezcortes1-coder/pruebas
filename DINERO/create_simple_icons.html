@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Iconos</title>
+</head>
+<body>
+    <h2>Generador de Iconos para PWA</h2>
+    <p>Abre este archivo en tu navegador y haz click derecho en cada imagen para guardarla.</p>
+    
+    <h3>Icon 192x192</h3>
+    <canvas id="icon192" width="192" height="192"></canvas>
+    
+    <h3>Icon 512x512</h3>
+    <canvas id="icon512" width="512" height="512"></canvas>
+    
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background verde oscuro
+            ctx.fillStyle = '#2d5016';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Círculo blanco central
+            const center = size / 2;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(center, center, size * 0.31, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Signo de pesos verde oscuro
+            ctx.fillStyle = '#2d5016';
+            ctx.font = `bold ${size * 0.43}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', center, center + size * 0.05);
+        }
+        
+        createIcon('icon192', 192);
+        createIcon('icon512', 512);
+        
+        // Convert to downloadable images
+        setTimeout(() => {
+            const canvas192 = document.getElementById('icon192');
+            const canvas512 = document.getElementById('icon512');
+            
+            // Create download links
+            const link192 = document.createElement('a');
+            link192.download = 'icon-192.png';
+            link192.href = canvas192.toDataURL();
+            link192.textContent = 'Descargar icon-192.png';
+            link192.style.display = 'block';
+            link192.style.margin = '10px 0';
+            
+            const link512 = document.createElement('a');
+            link512.download = 'icon-512.png';
+            link512.href = canvas512.toDataURL();
+            link512.textContent = 'Descargar icon-512.png';
+            link512.style.display = 'block';
+            link512.style.margin = '10px 0';
+            
+            document.body.appendChild(link192);
+            document.body.appendChild(link512);
+        }, 100);
+    </script>
+</body>
+</html>
