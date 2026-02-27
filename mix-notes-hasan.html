@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mix Notes → Pro Tools · Hasan Estudio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #F5A623;
+  --orange-d: #D9880A;
+  --orange-pale: #FEF5E7;
+  --orange-border: #FADEA0;
+  --g900: #1C1C1C;
+  --g700: #484848;
+  --g500: #8A8A8A;
+  --g200: #E4E4E4;
+  --g100: #F6F4F0;
+  --white: #FFFFFF;
+  --green: #237A47;
+  --r: 10px;
+  --shadow: 0 2px 18px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #F4F1EC;
+  color: var(--g900);
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar {
+  background: var(--white);
+  border-bottom: 2.5px solid var(--orange);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 14px rgba(245,166,35,0.13);
+}
+.tb-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 21px;
+  color: var(--orange);
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+.tb-sub {
+  font-size: 10px;
+  color: var(--g500);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.tb-right {
+  margin-left: auto;
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--orange);
+  opacity: 0.7;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 16px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+/* ── CARD ────────────────────────────────────────────────────── */
+.card {
+  background: var(--white);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+  border: 1px solid rgba(245,166,35,0.10);
+}
+.card-full {
+  grid-column: 1 / -1;
+}
+.card-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title::before {
+  content: '';
+  width: 18px; height: 2px;
+  background: var(--orange);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── FIELDS ─────────────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--g500);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+select, input[type=text] {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--g200);
+  border-radius: 7px;
+  color: var(--g900);
+  background: var(--white);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+select:focus, input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(245,166,35,.10);
+}
+
+/* ── TEXTAREA ────────────────────────────────────────────────── */
+.notes-area {
+  width: 100%;
+  min-height: 280px;
+  font-family: 'DM Mono', 'Fira Mono', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 12px 14px;
+  border: 1.5px solid var(--g200);
+  border-radius: 8px;
+  color: var(--g900);
+  background: #FAFAF8;
+  resize: vertical;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.notes-area:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(245,166,35,.10);
+  background: var(--white);
+}
+.notes-hint {
+  font-size: 11px;
+  color: var(--g500);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.notes-hint code {
+  background: var(--g100);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Fira Mono', monospace;
+  font-size: 11px;
+  color: var(--orange-d);
+}
+
+/* ── PREVIEW TABLE ───────────────────────────────────────────── */
+.preview-wrap {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.preview-table th {
+  text-align: left;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--g500);
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--orange-border);
+  white-space: nowrap;
+}
+.preview-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--g100);
+  vertical-align: top;
+}
+.preview-table tr:last-child td { border-bottom: none; }
+.preview-table tr:hover td { background: var(--orange-pale); }
+.td-num {
+  color: var(--g500);
+  font-size: 11px;
+  width: 28px;
+}
+.td-tc {
+  font-family: 'Fira Mono', monospace;
+  color: var(--orange-d);
+  font-size: 12px;
+  white-space: nowrap;
+  width: 100px;
+}
+.td-name { color: var(--g900); }
+.td-err {
+  color: #C0392B;
+  font-size: 11px;
+  font-style: italic;
+}
+.empty-state {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--g500);
+  font-size: 13px;
+}
+.empty-state .big { font-size: 28px; margin-bottom: 8px; }
+
+/* ── COUNTER ─────────────────────────────────────────────────── */
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.badge {
+  background: var(--orange-pale);
+  border: 1.5px solid var(--orange-border);
+  color: var(--orange-d);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.badge-err {
+  background: #FFE8E8;
+  border-color: #FFBBBB;
+  color: #C0392B;
+}
+
+/* ── EXPORT BUTTON ───────────────────────────────────────────── */
+.btn-export {
+  width: 100%;
+  padding: 13px;
+  background: var(--orange);
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 4px 18px rgba(245,166,35,.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.btn-export:hover { background: var(--orange-d); transform: translateY(-1px); }
+.btn-export:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ── TOAST ───────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--g900); color: white;
+  padding: 11px 18px; border-radius: 8px;
+  font-size: 13px; opacity: 0;
+  transform: translateY(8px);
+  transition: all .25s; z-index: 999;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok { background: var(--green); }
+.toast.err { background: #B71C1C; }
+
+@media(max-width:640px) {
+  .wrap { grid-template-columns: 1fr; }
+  .card-full { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="tb-name">HASAN</div>
+    <div class="tb-sub">Mix Notes → Pro Tools</div>
+  </div>
+  <div class="tb-right">escuchar es mirar.</div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── CONFIGURACIÓN ──────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Configuración de sesión</div>
+
+    <div class="field">
+      <label>Frame Rate</label>
+      <select id="fps" onchange="parse()">
+        <option value="23.976">23.976 fps</option>
+        <option value="24">24 fps</option>
+        <option value="25">25 fps</option>
+        <option value="29.97">29.97 fps (NDF)</option>
+        <option value="29.97df">29.97 fps (DF)</option>
+        <option value="30">30 fps</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Sample Rate</label>
+      <select id="sr" onchange="parse()">
+        <option value="48000" selected>48000 Hz</option>
+        <option value="44100">44100 Hz</option>
+        <option value="96000">96000 Hz</option>
+        <option value="88200">88200 Hz</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Offset inicio de sesión</label>
+      <select id="offset" onchange="parse()">
+        <option value="3600">01:00:00:00 (cine / TV)</option>
+        <option value="0">00:00:00:00 (sin offset)</option>
+        <option value="custom">Personalizado…</option>
+      </select>
+    </div>
+
+    <div class="field" id="custom-offset-field" style="display:none">
+      <label>Offset (HH:MM:SS)</label>
+      <input type="text" id="custom-offset" placeholder="00:58:00" oninput="parse()">
+    </div>
+
+  </div>
+
+  <!-- ── INFO ───────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Cómo usar</div>
+    <p style="font-size:13px;color:var(--g700);line-height:1.7;margin-bottom:12px">
+      Escribe o pega tus notas en el formato que ya usas. Un marker por línea, comenzando con el timecode.
+    </p>
+    <p style="font-size:12px;color:var(--g500);line-height:1.9;font-family:'Fira Mono',monospace;background:var(--g100);padding:12px 14px;border-radius:8px;border-left:3px solid var(--orange)">
+      01:10:20 Subir diálogo mamá 1.5 dB<br>
+      1:23:45 Reverb vocals muy larga<br>
+      23:10 Kick necesita más 80hz<br>
+      02:14:30 Notas del director: quitar música
+    </p>
+    <p style="font-size:11.5px;color:var(--g500);margin-top:12px;line-height:1.6">
+      Acepta <strong>HH:MM:SS</strong>, <strong>H:MM:SS</strong> y <strong>MM:SS</strong>.<br>
+      Las líneas sin timecode válido se ignoran.
+    </p>
+    <p style="font-size:11.5px;color:var(--g500);margin-top:10px;line-height:1.6">
+      En Pro Tools: <strong>File → Import → Session Data</strong> o arrastra el <code style="background:var(--g100);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">.txt</code> a la ventana de Markers.
+    </p>
+  </div>
+
+  <!-- ── NOTAS INPUT ────────────────────────────────────────── -->
+  <div class="card card-full">
+    <div class="card-title">Notas de mezcla</div>
+    <textarea
+      class="notes-area"
+      id="notes"
+      placeholder="01:10:20 Subir diálogo mamá 1.5 dB&#10;01:23:45 Reverb vocals muy larga&#10;01:45:00 Kick necesita más 80hz&#10;02:14:30 Notas del director: quitar música"
+      oninput="parse()"
+      spellcheck="false"
+    ></textarea>
+  </div>
+
+  <!-- ── PREVIEW ────────────────────────────────────────────── -->
+  <div class="card card-full">
+    <div class="card-title">Preview de markers</div>
+
+    <div class="counter" id="counter" style="display:none">
+      <span class="badge" id="badge-ok">0 markers</span>
+      <span class="badge badge-err" id="badge-err" style="display:none">0 errores</span>
+    </div>
+
+    <div class="preview-wrap">
+      <div id="preview-empty" class="empty-state">
+        <div class="big">🎚</div>
+        Escribe tus notas arriba para ver los markers aquí
+      </div>
+      <table class="preview-table" id="preview-table" style="display:none">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Timecode</th>
+            <th>Samples</th>
+            <th>Marker</th>
+          </tr>
+        </thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+
+    <button class="btn-export" id="btn-export" onclick="exportTxt()" disabled>
+      ⬇ &nbsp;Exportar .txt para Pro Tools
+    </button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PARSED MARKERS ────────────────────────────────────────────
+let markers = [];
+
+// ── OFFSET SELECT ─────────────────────────────────────────────
+document.getElementById('offset').addEventListener('change', function() {
+  const show = this.value === 'custom';
+  document.getElementById('custom-offset-field').style.display = show ? '' : 'none';
+  parse();
+});
+
+// ── PARSE TIMECODE ────────────────────────────────────────────
+// Accepts: MM:SS | H:MM:SS | HH:MM:SS  (with optional leading zeros)
+function parseTC(str) {
+  str = str.trim();
+  // Match H:MM:SS or HH:MM:SS or MM:SS
+  const m = str.match(/^(\d{1,2}):(\d{2}):(\d{2})$/) ||
+            str.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+
+  let h=0, min=0, sec=0;
+  if (m.length === 4) {
+    // HH:MM:SS
+    h   = parseInt(m[1]);
+    min = parseInt(m[2]);
+    sec = parseInt(m[3]);
+  } else {
+    // MM:SS
+    min = parseInt(m[1]);
+    sec = parseInt(m[2]);
+  }
+
+  if (min > 59 || sec > 59) return null;
+  return h * 3600 + min * 60 + sec;
+}
+
+// ── GET OFFSET (seconds) ──────────────────────────────────────
+function getOffsetSec() {
+  const sel = document.getElementById('offset').value;
+  if (sel === 'custom') {
+    const raw = document.getElementById('custom-offset').value.trim();
+    const v = parseTC(raw);
+    return v !== null ? v : 3600;
+  }
+  return parseInt(sel);
+}
+
+// ── SECONDS → TIMECODE STRING ─────────────────────────────────
+function secsToTC(totalSec, fps) {
+  const realFps = fps === '29.97df' ? 29.97 : parseFloat(fps);
+  const h   = Math.floor(totalSec / 3600);
+  const rem = totalSec % 3600;
+  const m   = Math.floor(rem / 60);
+  const s   = rem % 60;
+  const f   = 0; // we work at second precision
+  const pad = n => String(Math.floor(n)).padStart(2,'0');
+  return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`;
+}
+
+// ── SECONDS → SAMPLES ─────────────────────────────────────────
+function secsToSamples(totalSec, sr) {
+  return Math.round(totalSec * parseInt(sr));
+}
+
+// ── MAIN PARSE ────────────────────────────────────────────────
+function parse() {
+  const raw    = document.getElementById('notes').value;
+  const fps    = document.getElementById('fps').value;
+  const sr     = document.getElementById('sr').value;
+  const offset = getOffsetSec();
+
+  const lines = raw.split('\n');
+  markers = [];
+  let errors = 0;
+
+  lines.forEach((line, i) => {
+    line = line.trim();
+    if (!line) return;
+
+    // Extract timecode: first token
+    const parts = line.split(/\s+/);
+    const tcStr = parts[0];
+    const name  = parts.slice(1).join(' ').trim();
+
+    const tcSec = parseTC(tcStr);
+    if (tcSec === null) {
+      // Line has content but no parseable TC — flag as error only if it looks like an attempt
+      if (/^\d/.test(tcStr)) errors++;
+      return;
+    }
+
+    const absoluteSec = tcSec + offset;
+    markers.push({
+      num:     markers.length + 1,
+      tcStr:   secsToTC(tcSec, fps),
+      samples: secsToSamples(absoluteSec, sr),
+      name:    name || `Marker ${markers.length + 1}`,
+      rawLine: line,
+    });
+  });
+
+  renderPreview(errors);
+}
+
+// ── RENDER PREVIEW ────────────────────────────────────────────
+function renderPreview(errors) {
+  const empty  = document.getElementById('preview-empty');
+  const table  = document.getElementById('preview-table');
+  const body   = document.getElementById('preview-body');
+  const counter= document.getElementById('counter');
+  const badgeOk= document.getElementById('badge-ok');
+  const badgeErr=document.getElementById('badge-err');
+  const btn    = document.getElementById('btn-export');
+
+  if (markers.length === 0) {
+    empty.style.display = '';
+    table.style.display = 'none';
+    counter.style.display = 'none';
+    btn.disabled = true;
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = '';
+  counter.style.display = 'flex';
+
+  badgeOk.textContent = `${markers.length} marker${markers.length !== 1 ? 's' : ''}`;
+  if (errors > 0) {
+    badgeErr.textContent = `${errors} línea${errors !== 1 ? 's' : ''} ignorada${errors !== 1 ? 's' : ''}`;
+    badgeErr.style.display = '';
+  } else {
+    badgeErr.style.display = 'none';
+  }
+
+  body.innerHTML = '';
+  markers.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-num">${m.num}</td>
+      <td class="td-tc">${m.tcStr}</td>
+      <td class="td-tc" style="color:var(--g500);font-size:11px">${m.samples.toLocaleString()}</td>
+      <td class="td-name">${escHtml(m.name)}</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  btn.disabled = false;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── EXPORT .TXT ───────────────────────────────────────────────
+function exportTxt() {
+  if (!markers.length) return;
+
+  const fps = document.getElementById('fps').value;
+  const sr  = document.getElementById('sr').value;
+
+  // Pro Tools marker import format
+  // Header line + tab-delimited rows
+  const lines = [
+    `#\tLocation\tTime Reference\tUnits\tName\tComments`,
+  ];
+
+  markers.forEach(m => {
+    lines.push(`${m.num}\t${m.tcStr}\t${m.samples}\tSamples\t${m.name}\t`);
+  });
+
+  const content = lines.join('\r\n') + '\r\n';
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `mix_notes_markers.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  toast(`✓ ${markers.length} markers exportados`, 'ok');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  parse();
+});
+</script>
+</body>
+</html>
