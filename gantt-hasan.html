@@ -350,7 +350,14 @@ input:focus, select:focus {
   box-shadow: var(--shadow);
   overflow: auto;
   border: 1px solid rgba(245,166,35,0.12);
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--orange-border) transparent;
 }
+#gantt-wrap::-webkit-scrollbar { height: 6px; width: 6px; }
+#gantt-wrap::-webkit-scrollbar-track { background: transparent; }
+#gantt-wrap::-webkit-scrollbar-thumb { background: var(--orange-border); border-radius: 3px; }
+#gantt-wrap::-webkit-scrollbar-thumb:hover { background: var(--orange); }
 #gantt-canvas {
   display: block;
 }
@@ -807,19 +814,21 @@ function drawGantt(canvas, data, scale) {
   const HEADER_H = WEEK_H + DAY_H;
   const TITLE_H  = 50;
 
-  const W = (LABEL_W + totalDays * DAY_W) * scale;
-  const H = (TITLE_H + HEADER_H + tasks.length * ROW_H + 20) * scale;
+  const TW_full = LABEL_W + totalDays * DAY_W;
+  const TH_full = TITLE_H + HEADER_H + tasks.length * ROW_H + 20;
 
-  canvas.width  = W;
-  canvas.height = H;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
+  // Use devicePixelRatio for crisp rendering but keep CSS size = logical size
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = TW_full * dpr;
+  canvas.height = TH_full * dpr;
+  canvas.style.width  = TW_full + 'px';
+  canvas.style.height = TH_full + 'px';
 
   const ctx = canvas.getContext('2d');
-  ctx.scale(scale, scale);
+  ctx.scale(dpr, dpr);
 
-  const TW = LABEL_W + totalDays * DAY_W;
-  const TH = TITLE_H + HEADER_H + tasks.length * ROW_H + 20;
+  const TW = TW_full;
+  const TH = TH_full;
 
   // Background
   ctx.fillStyle = '#FFFFFF';
@@ -971,15 +980,21 @@ function drawGantt(canvas, data, scale) {
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
 
-      // Weekend gaps (slightly darker)
+      // Draw bar in segments, skipping weekends (which get grey fill)
+      // First draw grey blocks for every weekend day in range
       for (let i=s; i<=e; i++) {
         if (i % 7 === 5 || i % 7 === 6) {
-          ctx.globalAlpha = 0.25;
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(LABEL_W + i*DAY_W, by, DAY_W, bh);
-          ctx.globalAlpha = 1;
+          const wx = LABEL_W + i * DAY_W;
+          // grey fill clipped to bar height
+          ctx.fillStyle = '#E0DDD8';
+          ctx.fillRect(wx, by, DAY_W, bh);
         }
       }
+      // Re-draw rounded border on top so corners look clean
+      ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = 0.5;
+      roundRect(ctx, bx, by, bw, bh, rad);
+      ctx.stroke();
     }
   });
 
@@ -1179,6 +1194,15 @@ async function buildPDF() {
 
       doc.setFillColor(...col);
       doc.roundedRect(bx, by, bw, bh, 1.2, 1.2, 'F');
+
+      // Grey out weekend days inside the bar
+      for (let i=s; i<=e; i++) {
+        if (i % 7 === 5 || i % 7 === 6) {
+          const wx = MARGIN + LABEL_W + i * DAY_W;
+          doc.setFillColor(220, 217, 212);
+          doc.rect(wx, by, DAY_W, bh, 'F');
+        }
+      }
     }
   });
 
