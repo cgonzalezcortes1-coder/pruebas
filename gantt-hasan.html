@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gantt · Hasan Estudio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --orange: #F5A623;
+  --orange-d: #D9880A;
+  --orange-pale: #FEF5E7;
+  --orange-border: #FADEA0;
+  --g900: #1C1C1C;
+  --g700: #484848;
+  --g500: #8A8A8A;
+  --g200: #E4E4E4;
+  --g100: #F6F4F0;
+  --white: #FFFFFF;
+  --r: 10px;
+  --shadow: 0 2px 18px rgba(0,0,0,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #F4F1EC;
+  color: var(--g900);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar {
+  background: var(--white);
+  border-bottom: 2.5px solid var(--orange);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 14px rgba(245,166,35,0.13);
+}
+.tb-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 21px;
+  color: var(--orange);
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+.tb-sub {
+  font-size: 10px;
+  color: var(--g500);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.tb-right {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.tb-italic {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--orange);
+  opacity: 0.7;
+  margin-right: 8px;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  min-height: calc(100vh - 57px);
+}
+
+/* ── SIDEBAR ────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--g200);
+  padding: 24px 20px 80px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.sec-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sec-title::before {
+  content: '';
+  width: 18px; height: 2px;
+  background: var(--orange);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.sec-block {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--g100);
+}
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--g500);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+input, select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--g200);
+  border-radius: 7px;
+  color: var(--g900);
+  background: var(--white);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+input:focus, select:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(245,166,35,.10);
+}
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── TIPO FECHA ──────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  background: var(--g100);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 14px;
+  gap: 2px;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--g500);
+  font-weight: 500;
+  transition: all .15s;
+}
+.toggle-btn.active {
+  background: var(--white);
+  color: var(--orange-d);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.09);
+  font-weight: 600;
+}
+
+/* ── TASK CARDS ─────────────────────────────────────────────── */
+.task-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+.task-card {
+  background: var(--g100);
+  border-radius: 9px;
+  padding: 12px 14px;
+  border: 1.5px solid transparent;
+  transition: border-color .15s;
+  position: relative;
+}
+.task-card:hover { border-color: var(--orange-border); }
+
+.task-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.task-color-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid rgba(0,0,0,0.12);
+  cursor: pointer;
+}
+.task-name-input {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--g900);
+  padding: 2px 4px;
+  border-radius: 4px;
+  border-bottom: 1.5px solid var(--g200);
+}
+.task-name-input:focus {
+  outline: none;
+  border-bottom-color: var(--orange);
+  box-shadow: none;
+}
+.task-del {
+  width: 22px; height: 22px;
+  border: none;
+  background: rgba(192,57,43,0.10);
+  color: #C0392B;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .12s;
+}
+.task-del:hover { background: #C0392B; color: white; }
+
+.task-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.task-range label {
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+.task-range input, .task-range select {
+  font-size: 11.5px;
+  padding: 5px 7px;
+  background: var(--white);
+}
+
+.task-type-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.type-btn {
+  padding: 4px 10px;
+  border: 1.5px solid var(--g200);
+  border-radius: 12px;
+  background: var(--white);
+  cursor: pointer;
+  font-size: 10.5px;
+  color: var(--g700);
+  font-family: 'DM Sans', sans-serif;
+  transition: all .12s;
+}
+.type-btn.active {
+  border-color: var(--orange);
+  background: var(--orange-pale);
+  color: var(--orange-d);
+  font-weight: 600;
+}
+
+/* Color picker popup */
+.color-popup {
+  position: absolute;
+  z-index: 100;
+  background: var(--white);
+  border: 1.5px solid var(--g200);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 170px;
+}
+.color-popup.open { display: flex; }
+.cp-swatch {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2.5px solid transparent;
+  transition: transform .1s, border-color .1s;
+}
+.cp-swatch:hover { transform: scale(1.15); }
+.cp-swatch.sel { border-color: var(--g700); }
+
+/* ── ADD TASK BUTTON ────────────────────────────────────────── */
+.btn-add-task {
+  width: 100%;
+  padding: 9px;
+  border: 2px dashed var(--orange-border);
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--orange-d);
+  transition: all .13s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.btn-add-task:hover { background: var(--orange-pale); border-color: var(--orange); }
+
+/* ── PDF BUTTON ─────────────────────────────────────────────── */
+.btn-pdf {
+  padding: 10px 20px;
+  background: var(--orange);
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 3px 14px rgba(245,166,35,.35);
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-pdf:hover { background: var(--orange-d); transform: translateY(-1px); }
+.btn-pdf:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* ── PREVIEW AREA ───────────────────────────────────────────── */
+.preview-area {
+  padding: 28px 32px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.preview-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--g500);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.preview-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--g200);
+}
+
+/* ── GANTT PREVIEW (canvas container) ──────────────────────── */
+#gantt-wrap {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: auto;
+  border: 1px solid rgba(245,166,35,0.12);
+}
+#gantt-canvas {
+  display: block;
+}
+
+/* ── TOAST ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--g900); color: white;
+  padding: 11px 18px; border-radius: 8px;
+  font-size: 13px; opacity: 0;
+  transform: translateY(8px);
+  transition: all .25s; z-index: 999;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok { background: #237A47; }
+.toast.err { background: #B71C1C; }
+
+@media(max-width:768px){
+  .app { grid-template-columns: 1fr; }
+  .preview-area { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="tb-name">HASAN</div>
+    <div class="tb-sub">Gantt</div>
+  </div>
+  <div class="tb-right">
+    <span class="tb-italic">escuchar es mirar.</span>
+    <button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">⬇ Exportar PDF</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+  <div class="sidebar">
+
+    <!-- PROYECTO -->
+    <div class="sec-block">
+      <div class="sec-title">Proyecto</div>
+      <div class="field">
+        <label>Título del proyecto</label>
+        <input type="text" id="f-title" placeholder="Ej: Jackson C. Frank: Here Come the Blues" oninput="renderGantt()">
+      </div>
+      <div class="field">
+        <label>Subtítulo / Productora <span style="opacity:.5;font-weight:400">(opcional)</span></label>
+        <input type="text" id="f-subtitle" placeholder="Ej: A24 Films" oninput="renderGantt()">
+      </div>
+    </div>
+
+    <!-- FECHAS -->
+    <div class="sec-block">
+      <div class="sec-title">Fechas</div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="mode-weeks" onclick="setDateMode('weeks')">Solo semanas</button>
+        <button class="toggle-btn" id="mode-dates" onclick="setDateMode('dates')">Fechas reales</button>
+      </div>
+
+      <div id="sec-weeks">
+        <div class="field">
+          <label>Número de semanas</label>
+          <input type="number" id="f-numweeks" value="8" min="1" max="24" oninput="rebuildWeekSelects();renderGantt()">
+        </div>
+        <div class="field">
+          <label>Etiqueta de semanas</label>
+          <select id="f-weeklabel" onchange="renderGantt()">
+            <option value="Week">Week</option>
+            <option value="WEEK">WEEK</option>
+            <option value="Semana">Semana</option>
+            <option value="Wk">Wk</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="sec-dates" style="display:none">
+        <div class="field">
+          <label>Fecha de inicio</label>
+          <input type="date" id="f-startdate" oninput="renderGantt()">
+        </div>
+        <div class="field">
+          <label>Número de semanas</label>
+          <input type="number" id="f-numweeks2" value="8" min="1" max="24" oninput="rebuildWeekSelects();renderGantt()">
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREAS -->
+    <div class="sec-block">
+      <div class="sec-title">Tareas</div>
+      <div class="task-list" id="task-list"></div>
+      <button class="btn-add-task" onclick="addTask()">＋ Agregar tarea</button>
+    </div>
+
+  </div>
+
+  <!-- ── PREVIEW ──────────────────────────────────────────────── -->
+  <div class="preview-area">
+    <div class="preview-label">Vista previa</div>
+    <div id="gantt-wrap">
+      <canvas id="gantt-canvas"></canvas>
+    </div>
+    <p style="font-size:11px;color:var(--g500);text-align:center">
+      El PDF se exporta en A4 horizontal con el branding de Hasan Estudio
+    </p>
+  </div>
+
+</div>
+
+<!-- Color popup (shared, moved via JS) -->
+<div class="color-popup" id="color-popup"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PALETA ────────────────────────────────────────────────────
+const PALETTE = [
+  '#4CAF50','#8BC34A','#CDDC39',
+  '#FFEB3B','#FFC107','#FF9800',
+  '#FF5722','#F44336','#E91E63',
+  '#9C27B0','#673AB7','#3F51B5',
+  '#2196F3','#03A9F4','#00BCD4',
+  '#009688','#795548','#607D8B',
+  '#F5A623','#00E5FF',
+];
+
+const TASK_COLORS = [
+  '#00C853','#FFD600','#FF6D00',
+  '#AA00FF','#2979FF','#00B0FF',
+  '#F5A623','#E53935','#00BFA5',
+  '#6200EA',
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let dateMode = 'weeks';
+let taskId = 0;
+let tasks = [];
+let activeColorTarget = null;
+let numWeeks = 8;
+
+// ── DATE MODE ─────────────────────────────────────────────────
+function setDateMode(m) {
+  dateMode = m;
+  document.getElementById('mode-weeks').classList.toggle('active', m==='weeks');
+  document.getElementById('mode-dates').classList.toggle('active', m==='dates');
+  document.getElementById('sec-weeks').style.display = m==='weeks' ? '' : 'none';
+  document.getElementById('sec-dates').style.display = m==='dates' ? '' : 'none';
+  renderGantt();
+}
+
+// ── GET WEEKS COUNT ───────────────────────────────────────────
+function getNumWeeks() {
+  const id = dateMode === 'weeks' ? 'f-numweeks' : 'f-numweeks2';
+  return parseInt(document.getElementById(id)?.value || 8);
+}
+
+// ── ADD TASK ─────────────────────────────────────────────────
+function addTask(name='', color='', startDay=1, endDay=7, type='bar') {
+  const id = ++taskId;
+  const col = color || TASK_COLORS[(tasks.length) % TASK_COLORS.length];
+  const obj = { id, name, color: col, startDay, endDay, type };
+  tasks.push(obj);
+  renderTaskCard(obj);
+  renderGantt();
+}
+
+// Add by week range (more natural)
+function addTaskW(name, color, sw, sd, ew, ed, type='bar') {
+  addTask(name, color, (sw-1)*7+sd, (ew-1)*7+ed, type);
+}
+
+// Rebuild week selects when numWeeks changes
+function rebuildWeekSelects() {
+  tasks.forEach(t => {
+    if (t._swSel) t._swSel.rebuild();
+    if (t._ewSel) t._ewSel.rebuild();
+  });
+}
+
+function renderTaskCard(t) {
+  const list = document.getElementById('task-list');
+
+  const card = document.createElement('div');
+  card.className = 'task-card';
+  card.id = 'tc-'+t.id;
+
+  // ── Header ────────────────────────────────────────────────
+  const hdr = document.createElement('div');
+  hdr.className = 'task-card-header';
+
+  const dot = document.createElement('div');
+  dot.className = 'task-color-dot';
+  dot.style.background = t.color;
+  dot.onclick = (e) => openColorPicker(e, t.id);
+
+  const nameI = document.createElement('input');
+  nameI.className = 'task-name-input';
+  nameI.type = 'text';
+  nameI.placeholder = 'Nombre de la tarea';
+  nameI.value = t.name;
+  nameI.oninput = () => { t.name = nameI.value; renderGantt(); };
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'task-del';
+  delBtn.innerHTML = '×';
+  delBtn.onclick = () => {
+    tasks = tasks.filter(x => x.id !== t.id);
+    card.remove();
+    renderGantt();
+  };
+
+  hdr.append(dot, nameI, delBtn);
+
+  // ── Range (Semana + Día) ───────────────────────────────────
+  const range = document.createElement('div');
+  range.className = 'task-range';
+
+  const DAY_NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+  // Convert absolute day → {week, dow}  (1-indexed)
+  const dayToWD = d => ({ w: Math.ceil(d/7), dow: ((d-1)%7)+1 });
+  // Convert {week, dow} → absolute day
+  const wdToDay = (w, dow) => (w-1)*7 + dow;
+
+  const nw = () => getNumWeeks();
+
+  // Build week options
+  const mkWeekSel = (val, onChange) => {
+    const wrap = document.createElement('div');
+    const l = document.createElement('label'); l.textContent = 'Semana';
+    const sel = document.createElement('select');
+    sel.style.cssText = 'font-size:11.5px;padding:5px 7px;background:var(--white)';
+    const rebuild = () => {
+      const cur = parseInt(sel.value) || val;
+      sel.innerHTML = '';
+      for (let i=1; i<=getNumWeeks(); i++) {
+        const o = document.createElement('option');
+        o.value = i; o.textContent = `Sem ${i}`;
+        if (i === cur) o.selected = true;
+        sel.appendChild(o);
+      }
+    };
+    rebuild();
+    sel.oninput = () => { onChange(parseInt(sel.value)); renderGantt(); };
+    sel._rebuild = rebuild;
+    wrap.append(l, sel);
+    return { wrap, sel, rebuild };
+  };
+
+  const mkDaySel = (val, onChange) => {
+    const wrap = document.createElement('div');
+    const l = document.createElement('label'); l.textContent = 'Día';
+    const sel = document.createElement('select');
+    sel.style.cssText = 'font-size:11.5px;padding:5px 7px;background:var(--white)';
+    DAY_NAMES.forEach((d,i) => {
+      const o = document.createElement('option');
+      o.value = i+1; o.textContent = d;
+      if (i+1 === val) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.oninput = () => { onChange(parseInt(sel.value)); renderGantt(); };
+    wrap.append(l, sel);
+    return { wrap, sel };
+  };
+
+  const startWD = dayToWD(t.startDay);
+  const endWD   = dayToWD(t.endDay);
+
+  // Store week/dow on task for easy reference
+  t.startWeek = startWD.w;  t.startDow = startWD.dow;
+  t.endWeek   = endWD.w;    t.endDow   = endWD.dow;
+
+  const sw = mkWeekSel(t.startWeek, v => {
+    t.startWeek = v;
+    t.startDay  = wdToDay(v, t.startDow);
+    if (t.startDay > t.endDay) {
+      t.endWeek = v; t.endDow = t.startDow;
+      t.endDay  = t.startDay;
+      ew.sel.value = v; ed.sel.value = t.startDow;
+    }
+  });
+  const sd = mkDaySel(t.startDow, v => {
+    t.startDow = v;
+    t.startDay = wdToDay(t.startWeek, v);
+    if (t.startDay > t.endDay) {
+      t.endWeek = t.startWeek; t.endDow = v;
+      t.endDay  = t.startDay;
+      ew.sel.value = t.startWeek; ed.sel.value = v;
+    }
+  });
+
+  const ew = mkWeekSel(t.endWeek, v => {
+    t.endWeek = v;
+    t.endDay  = wdToDay(v, t.endDow);
+    if (t.endDay < t.startDay) {
+      t.startWeek = v; t.startDow = t.endDow;
+      t.startDay  = t.endDay;
+      sw.sel.value = v; sd.sel.value = t.endDow;
+    }
+  });
+  const ed = mkDaySel(t.endDow, v => {
+    t.endDow = v;
+    t.endDay = wdToDay(t.endWeek, v);
+    if (t.endDay < t.startDay) {
+      t.startWeek = t.endWeek; t.startDow = v;
+      t.startDay  = t.endDay;
+      sw.sel.value = t.endWeek; sd.sel.value = v;
+    }
+  });
+
+  // Store refs for rebuilding when numWeeks changes
+  t._swSel = sw; t._ewSel = ew;
+
+  // Layout: Start row + End row
+  const startRow = document.createElement('div');
+  startRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px';
+  const startLbl = document.createElement('div');
+  startLbl.style.cssText = 'grid-column:1/-1;font-size:9px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px';
+  startLbl.textContent = 'Inicio';
+  const endLbl = document.createElement('div');
+  endLbl.style.cssText = 'grid-column:1/-1;font-size:9px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;margin-top:4px';
+  endLbl.textContent = 'Fin';
+
+  range.style.cssText = 'display:flex;flex-direction:column;gap:0';
+  const sg = document.createElement('div');
+  sg.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
+  sg.append(sw.wrap, sd.wrap);
+  const eg = document.createElement('div');
+  eg.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
+  eg.append(ew.wrap, ed.wrap);
+
+  range.append(startLbl, sg, endLbl, eg);
+
+  // ── Type ──────────────────────────────────────────────────
+  const typeRow = document.createElement('div');
+  typeRow.className = 'task-type-row';
+
+  const mkType = (lbl, val) => {
+    const btn = document.createElement('button');
+    btn.className = 'type-btn' + (t.type===val ? ' active' : '');
+    btn.textContent = lbl;
+    btn.onclick = () => {
+      t.type = val;
+      typeRow.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderGantt();
+    };
+    return btn;
+  };
+
+  typeRow.append(
+    mkType('▬ Barra', 'bar'),
+    mkType('◆ Evento', 'milestone'),
+  );
+
+  card.append(hdr, range, typeRow);
+  list.appendChild(card);
+}
+
+// ── COLOR PICKER ──────────────────────────────────────────────
+function openColorPicker(e, tid) {
+  e.stopPropagation();
+  const popup = document.getElementById('color-popup');
+  activeColorTarget = tid;
+
+  popup.innerHTML = '';
+  PALETTE.forEach(col => {
+    const sw = document.createElement('div');
+    sw.className = 'cp-swatch';
+    sw.style.background = col;
+    const t = tasks.find(x=>x.id===tid);
+    if (t && t.color === col) sw.classList.add('sel');
+    sw.onclick = (ev) => {
+      ev.stopPropagation();
+      applyColor(tid, col);
+      popup.classList.remove('open');
+    };
+    popup.appendChild(sw);
+  });
+
+  const rect = e.target.getBoundingClientRect();
+  popup.style.left = (rect.left + window.scrollX) + 'px';
+  popup.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+  popup.classList.add('open');
+}
+
+function applyColor(tid, col) {
+  const t = tasks.find(x=>x.id===tid);
+  if (!t) return;
+  t.color = col;
+  const card = document.getElementById('tc-'+tid);
+  if (card) card.querySelector('.task-color-dot').style.background = col;
+  renderGantt();
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('color-popup').classList.remove('open');
+});
+
+// ── RENDER GANTT (canvas) ─────────────────────────────────────
+function renderGantt() {
+  const canvas = document.getElementById('gantt-canvas');
+  drawGantt(canvas, getGanttData(), 1);
+}
+
+function getGanttData() {
+  const title    = document.getElementById('f-title')?.value?.trim() || 'Proyecto';
+  const subtitle = document.getElementById('f-subtitle')?.value?.trim() || '';
+  const nw       = getNumWeeks();
+  const wkLabel  = document.getElementById('f-weeklabel')?.value || 'Week';
+  const startDate = dateMode === 'dates'
+    ? document.getElementById('f-startdate')?.value
+    : null;
+
+  // Build day labels
+  const DAYS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  const DAYS_ES = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  const totalDays = nw * 7;
+  const dayLabels = [];
+  const weekStarts = []; // {col, label}
+
+  for (let w=0; w<nw; w++) {
+    weekStarts.push({ col: w*7, label: `${wkLabel} ${w+1}` });
+    for (let d=0; d<7; d++) {
+      const dayIdx = w*7+d;
+      if (startDate) {
+        const dt = new Date(startDate + 'T12:00:00');
+        dt.setDate(dt.getDate() + dayIdx);
+        const mn = dt.toLocaleString('en-US',{month:'short'});
+        dayLabels.push(`${mn} ${dt.getDate()}`);
+      } else {
+        dayLabels.push(DAYS[d]);
+      }
+    }
+  }
+
+  return { title, subtitle, nw, totalDays, dayLabels, weekStarts, tasks };
+}
+
+// ── DRAW ENGINE ───────────────────────────────────────────────
+function drawGantt(canvas, data, scale) {
+  const { title, subtitle, nw, totalDays, dayLabels, weekStarts, tasks } = data;
+
+  // Dimensions
+  const LABEL_W  = 190;
+  const DAY_W    = 28;
+  const WEEK_H   = 22;
+  const DAY_H    = 20;
+  const ROW_H    = 32;
+  const HEADER_H = WEEK_H + DAY_H;
+  const TITLE_H  = 50;
+
+  const W = (LABEL_W + totalDays * DAY_W) * scale;
+  const H = (TITLE_H + HEADER_H + tasks.length * ROW_H + 20) * scale;
+
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  const TW = LABEL_W + totalDays * DAY_W;
+  const TH = TITLE_H + HEADER_H + tasks.length * ROW_H + 20;
+
+  // Background
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, TW, TH);
+
+  // ── TITLE AREA ────────────────────────────────────────────
+  ctx.fillStyle = '#F5A623';
+  ctx.fillRect(0, 0, TW, TITLE_H);
+
+  // Title text
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 15px "DM Sans", sans-serif';
+  ctx.fillText(title, 20, 22);
+  if (subtitle) {
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.globalAlpha = 0.8;
+    ctx.fillText(subtitle, 20, 38);
+    ctx.globalAlpha = 1;
+  }
+  // HASAN label (right)
+  ctx.font = 'bold 14px "DM Serif Display", serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText('HASAN', TW - 14, 22);
+  ctx.font = '9px "DM Sans", sans-serif';
+  ctx.fillText('ESTUDIO', TW - 14, 34);
+  ctx.textAlign = 'left';
+
+  // ── WEEK HEADER ───────────────────────────────────────────
+  const wy = TITLE_H;
+  weekStarts.forEach((ws, wi) => {
+    const x = LABEL_W + ws.col * DAY_W;
+    const nextX = wi+1 < weekStarts.length
+      ? LABEL_W + weekStarts[wi+1].col * DAY_W
+      : LABEL_W + totalDays * DAY_W;
+    const bgColors = [
+      '#D9EAD3','#FFF2CC','#FCE5CD','#D9D2E9',
+      '#CFE2F3','#F4CCCC','#D9EAD3','#FFF2CC'
+    ];
+    ctx.fillStyle = bgColors[wi % bgColors.length];
+    ctx.fillRect(x, wy, nextX - x, WEEK_H);
+    ctx.fillStyle = '#484848';
+    ctx.font = 'bold 10px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(ws.label, x + (nextX-x)/2, wy + 14);
+    ctx.textAlign = 'left';
+  });
+
+  // ── DAY HEADER ────────────────────────────────────────────
+  const dy = TITLE_H + WEEK_H;
+  dayLabels.forEach((lbl, i) => {
+    const x = LABEL_W + i * DAY_W;
+    const isWeekend = (i % 7 === 5 || i % 7 === 6);
+    ctx.fillStyle = isWeekend ? '#ECECEC' : '#F8F6F2';
+    ctx.fillRect(x, dy, DAY_W, DAY_H);
+    ctx.fillStyle = isWeekend ? '#AAAAAA' : '#666666';
+    ctx.font = `${isWeekend?'normal':'500'} 8px "DM Sans", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, x + DAY_W/2, dy + 13);
+    ctx.textAlign = 'left';
+  });
+
+  // Vertical grid lines (week separators)
+  ctx.strokeStyle = 'rgba(245,166,35,0.30)';
+  ctx.lineWidth = 1;
+  weekStarts.forEach(ws => {
+    const x = LABEL_W + ws.col * DAY_W;
+    ctx.beginPath();
+    ctx.moveTo(x, TITLE_H);
+    ctx.lineTo(x, TH);
+    ctx.stroke();
+  });
+
+  // ── TASK ROWS ─────────────────────────────────────────────
+  tasks.forEach((task, ti) => {
+    const ry = TITLE_H + HEADER_H + ti * ROW_H;
+
+    // Row background
+    ctx.fillStyle = ti % 2 === 0 ? '#FFFFFF' : '#FAFAF8';
+    ctx.fillRect(0, ry, TW, ROW_H);
+
+    // Horizontal separator
+    ctx.strokeStyle = '#EEEBE5';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, ry + ROW_H);
+    ctx.lineTo(TW, ry + ROW_H);
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#333333';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.textAlign = 'left';
+    // Truncate label
+    let lbl = task.name || '—';
+    while (ctx.measureText(lbl).width > LABEL_W - 20 && lbl.length > 3) {
+      lbl = lbl.slice(0,-1);
+    }
+    if (lbl !== task.name) lbl += '…';
+    ctx.fillText(lbl, 14, ry + ROW_H/2 + 4);
+
+    // Weekend shading on row
+    for (let i=0; i<totalDays; i++) {
+      if (i % 7 === 5 || i % 7 === 6) {
+        ctx.fillStyle = 'rgba(0,0,0,0.025)';
+        ctx.fillRect(LABEL_W + i*DAY_W, ry, DAY_W, ROW_H);
+      }
+    }
+
+    // ── BAR or MILESTONE ─────────────────────────────────────
+    const s = Math.max(0, task.startDay - 1); // 0-indexed
+    const e = Math.min(totalDays - 1, task.endDay - 1);
+
+    if (task.type === 'milestone') {
+      // Diamond
+      const mx = LABEL_W + s * DAY_W + DAY_W/2;
+      const my = ry + ROW_H/2;
+      const ms = 7;
+      ctx.fillStyle = task.color;
+      ctx.beginPath();
+      ctx.moveTo(mx, my - ms);
+      ctx.lineTo(mx + ms, my);
+      ctx.lineTo(mx, my + ms);
+      ctx.lineTo(mx - ms, my);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else {
+      // Skip weekend days for visual - draw segments between weekends
+      const bx  = LABEL_W + s * DAY_W;
+      const bw  = (e - s + 1) * DAY_W;
+      const bh  = 16;
+      const by  = ry + (ROW_H - bh)/2;
+      const rad = 5;
+
+      // Shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 1;
+
+      // Fill
+      ctx.fillStyle = task.color;
+      roundRect(ctx, bx, by, bw, bh, rad);
+      ctx.fill();
+
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Weekend gaps (slightly darker)
+      for (let i=s; i<=e; i++) {
+        if (i % 7 === 5 || i % 7 === 6) {
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(LABEL_W + i*DAY_W, by, DAY_W, bh);
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+  });
+
+  // ── LEFT BORDER ───────────────────────────────────────────
+  ctx.strokeStyle = '#F5A623';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, TH);
+  ctx.stroke();
+
+  // ── RIGHT/BOTTOM BORDER ───────────────────────────────────
+  ctx.strokeStyle = '#E4E4E4';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(0, 0, TW, TH);
+
+  // ── LABEL / GRID DIVIDER ─────────────────────────────────
+  ctx.strokeStyle = 'rgba(245,166,35,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(LABEL_W, TITLE_H);
+  ctx.lineTo(LABEL_W, TH);
+  ctx.stroke();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── PDF GENERATION ────────────────────────────────────────────
+async function generatePDF() {
+  const btn = document.getElementById('btn-pdf');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando...';
+  try {
+    await buildPDF();
+    toast('✓ PDF generado correctamente', 'ok');
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇ Exportar PDF';
+  }
+}
+
+async function buildPDF() {
+  const { jsPDF } = window.jspdf;
+
+  // A4 landscape
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const PW = 297, PH = 210;
+
+  const data = getGanttData();
+
+  // ── Layout constants ─────────────────────────────────────
+  const MARGIN  = 14;
+  const TITLE_H = 18;
+  const WEEK_H  = 7;
+  const DAY_H   = 6;
+  const ROW_H   = 9;
+  const HDR_H   = WEEK_H + DAY_H;
+
+  const CONTENT_W = PW - MARGIN * 2;
+  const LABEL_W   = 48;
+  const GRID_W    = CONTENT_W - LABEL_W;
+  const DAY_W     = GRID_W / data.totalDays;
+
+  const TITLE_Y = MARGIN;
+  const HDR_Y   = TITLE_Y + TITLE_H + 4;
+  const BODY_Y  = HDR_Y + HDR_H;
+
+  const OR = [245, 166, 35];
+  const WH = [255, 255, 255];
+  const GR = [72, 72, 72];
+  const LG = [160, 160, 160];
+
+  // ── TITLE BAR ─────────────────────────────────────────────
+  doc.setFillColor(...OR);
+  doc.rect(MARGIN, TITLE_Y, CONTENT_W, TITLE_H, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...WH);
+  doc.text(data.title, MARGIN + 6, TITLE_Y + 11);
+
+  if (data.subtitle) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 235, 180);
+    doc.text(data.subtitle, MARGIN + 6, TITLE_Y + 16);
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255, 0.5);
+  doc.setGState(doc.GState({opacity:0.5}));
+  doc.text('HASAN', PW - MARGIN - 2, TITLE_Y + 8, { align: 'right' });
+  doc.setFontSize(6.5);
+  doc.text('ESTUDIO', PW - MARGIN - 2, TITLE_Y + 14, { align: 'right' });
+  doc.setGState(doc.GState({opacity:1}));
+
+  // ── WEEK HEADERS ──────────────────────────────────────────
+  const weekBgColors = [
+    [217,234,211],[255,242,204],[252,229,205],[217,210,233],
+    [207,226,243],[244,204,204],[217,234,211],[255,242,204],
+  ];
+
+  data.weekStarts.forEach((ws, wi) => {
+    const x  = MARGIN + LABEL_W + ws.col * DAY_W;
+    const nw = wi + 1 < data.weekStarts.length
+      ? data.weekStarts[wi+1].col * DAY_W
+      : data.totalDays * DAY_W;
+    const prevW = ws.col * DAY_W;
+    const bw = nw - prevW;
+
+    const bg = weekBgColors[wi % weekBgColors.length];
+    doc.setFillColor(...bg);
+    doc.rect(x, HDR_Y, bw, WEEK_H, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...GR);
+    doc.text(ws.label, x + bw/2, HDR_Y + 4.8, { align: 'center' });
+  });
+
+  // ── DAY HEADERS ───────────────────────────────────────────
+  data.dayLabels.forEach((lbl, i) => {
+    const x = MARGIN + LABEL_W + i * DAY_W;
+    const isWE = (i % 7 === 5 || i % 7 === 6);
+    doc.setFillColor(...(isWE ? [232,232,232] : [248,246,242]));
+    doc.rect(x, HDR_Y + WEEK_H, DAY_W, DAY_H, 'F');
+    doc.setFont('helvetica', isWE ? 'normal' : '500');
+    doc.setFontSize(5.5);
+    doc.setTextColor(...(isWE ? [170,170,170] : [100,100,100]));
+    doc.text(lbl, x + DAY_W/2, HDR_Y + WEEK_H + 4.2, { align: 'center' });
+  });
+
+  // ── TASK ROWS ─────────────────────────────────────────────
+  data.tasks.forEach((task, ti) => {
+    const ry = BODY_Y + ti * ROW_H;
+
+    // Row bg
+    doc.setFillColor(...(ti%2===0 ? WH : [250,250,248]));
+    doc.rect(MARGIN, ry, CONTENT_W, ROW_H, 'F');
+
+    // Row separator
+    doc.setDrawColor(235, 232, 228);
+    doc.setLineWidth(0.2);
+    doc.line(MARGIN, ry + ROW_H, MARGIN + CONTENT_W, ry + ROW_H);
+
+    // Weekend shading
+    for (let i=0; i<data.totalDays; i++) {
+      if (i % 7 === 5 || i % 7 === 6) {
+        doc.setFillColor(0, 0, 0, 0.03);
+        doc.setGState(doc.GState({opacity:0.04}));
+        doc.rect(MARGIN + LABEL_W + i * DAY_W, ry, DAY_W, ROW_H, 'F');
+        doc.setGState(doc.GState({opacity:1}));
+      }
+    }
+
+    // Label
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...GR);
+    let lbl = task.name || '—';
+    while (doc.getTextWidth(lbl) > LABEL_W - 4 && lbl.length > 2) lbl = lbl.slice(0,-1);
+    if (lbl !== task.name) lbl += '…';
+    doc.text(lbl, MARGIN + 2, ry + ROW_H/2 + 2.2);
+
+    // Bar / Milestone
+    const s = Math.max(0, task.startDay - 1);
+    const e = Math.min(data.totalDays - 1, task.endDay - 1);
+    const col = hexToRgb(task.color);
+
+    if (task.type === 'milestone') {
+      const mx = MARGIN + LABEL_W + s * DAY_W + DAY_W/2;
+      const my = ry + ROW_H/2;
+      const ms = 2.8;
+      doc.setFillColor(...col);
+      doc.lines([[ms,-ms],[ms,ms],[-ms,ms],[-ms,-ms]], mx, my - ms, [1,1], 'F');
+    } else {
+      const bx = MARGIN + LABEL_W + s * DAY_W;
+      const bw = (e - s + 1) * DAY_W;
+      const bh = 5.5;
+      const by = ry + (ROW_H - bh)/2;
+
+      doc.setFillColor(...col);
+      doc.roundedRect(bx, by, bw, bh, 1.2, 1.2, 'F');
+    }
+  });
+
+  // ── GRID LINES ────────────────────────────────────────────
+  doc.setDrawColor(245, 166, 35, 0.3);
+  doc.setLineWidth(0.3);
+  data.weekStarts.forEach(ws => {
+    const x = MARGIN + LABEL_W + ws.col * DAY_W;
+    doc.line(x, HDR_Y, x, BODY_Y + data.tasks.length * ROW_H);
+  });
+
+  // ── OUTER BORDER ─────────────────────────────────────────
+  doc.setDrawColor(...OR);
+  doc.setLineWidth(0.8);
+  doc.line(MARGIN, TITLE_Y, MARGIN, BODY_Y + data.tasks.length * ROW_H);
+
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.rect(MARGIN, TITLE_Y, CONTENT_W, TITLE_H + HDR_H + data.tasks.length * ROW_H);
+
+  // ── LABEL / GRID DIVIDER ─────────────────────────────────
+  doc.setDrawColor(245, 166, 35, 0.3);
+  doc.setLineWidth(0.4);
+  doc.line(
+    MARGIN + LABEL_W, HDR_Y,
+    MARGIN + LABEL_W, BODY_Y + data.tasks.length * ROW_H
+  );
+
+  // ── FOOTER ────────────────────────────────────────────────
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...LG);
+  doc.text('www.hasanestudio.net', PW/2, PH - 6, { align: 'center' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(200, 160, 80);
+  doc.setGState(doc.GState({opacity:0.4}));
+  doc.text('escuchar es mirar.', PW/2, PH - 10, { align: 'center' });
+  doc.setGState(doc.GState({opacity:1}));
+
+  // ── SAVE ─────────────────────────────────────────────────
+  const safeName = (data.title || 'gantt').replace(/[^\w\sáéíóúñÁÉÍÓÚÑ]/g,'_');
+  doc.save(`Gantt_Hasan_${safeName}.pdf`);
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r, g, b];
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Default date
+  const today = new Date();
+  const iso = today.toISOString().slice(0,10);
+  document.getElementById('f-startdate').value = iso;
+
+  // Load default tasks (semana inicio, día inicio, semana fin, día fin)
+  addTaskW('Dialog Editing',       '#4CAF50', 1,1, 5,5);
+  addTaskW('Foley Editing',        '#FFD600', 1,1, 5,5);
+  addTaskW('Backgrounds Editing',  '#FF9800', 1,1, 5,5);
+  addTaskW('Sound Effects Editing','#AA00FF', 1,1, 5,5);
+  addTaskW('Premix',               '#00BCD4', 6,1, 7,3);
+  addTaskW('Final Mix',            '#E53935', 7,4, 8,3);
+
+  renderGantt();
+});
+</script>
+</body>
+</html>
