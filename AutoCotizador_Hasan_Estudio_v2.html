@@ -763,61 +763,67 @@ async function buildPDF() {
   // Data rows
   let runTotal=0;
   rows.forEach((row,ri)=>{
-    doc.setFillColor(...(ri%2===0 ? WH : [252,249,244]));
-    doc.rect(tx, ty, CW, RH, 'F');
-    doc.setDrawColor(...OR); doc.setLineWidth(0.22);
-    doc.line(tx, ty+RH, tx+CW, ty+RH);
-    doc.line(tx, ty, tx, ty+RH);
-    doc.line(tx+CW, ty, tx+CW, ty+RH);
-
-    const ty2=ty+RH/2+1.5;
     const costoStr=row.costo ? fmtNum(row.costo) : '';
     const rawName=row.ap ? `*${row.nombre}` : row.nombre;
     const nameMaxW = colW[0]-5;
-    const truncate=(text, maxW)=>{
-      if(doc.getTextWidth(text)<=maxW) return text;
-      let t=text;
-      while(t.length>1 && doc.getTextWidth(t+'…')>maxW) t=t.slice(0,-1);
-      return t+'…';
-    };
-    // Setear font ANTES de medir para que getTextWidth sea preciso
+
+    // Setear font antes de medir
     doc.setFont('helvetica', row.ap?'italic':'normal');
     doc.setFontSize(8.5);
-    const name = truncate(rawName, nameMaxW);
+
+    // Partir el nombre en líneas si no cabe en una sola
+    const nameLines = doc.splitTextToSize(rawName, nameMaxW);
+    const rowH = nameLines.length > 1 ? RH * nameLines.length * 0.72 : RH;
+
+    // Fondo y bordes de la fila
+    doc.setFillColor(...(ri%2===0 ? WH : [252,249,244]));
+    doc.rect(tx, ty, CW, rowH, 'F');
+    doc.setDrawColor(...OR); doc.setLineWidth(0.22);
+    doc.line(tx, ty+rowH, tx+CW, ty+rowH);
+    doc.line(tx, ty, tx, ty+rowH);
+    doc.line(tx+CW, ty, tx+CW, ty+rowH);
+
+    // Posición Y centrada verticalmente en la fila
+    const ty2 = nameLines.length > 1 ? ty + 5 : ty+rowH/2+1.5;
+    const tyCenter = ty+rowH/2+1.5;
+
+    // Texto del concepto (puede ser multilinea)
+    doc.setTextColor(...(row.ap?LG:GR));
+    doc.text(nameLines, tx+3, ty2, {lineHeightFactor: 1.4});
+    if(row.ap){
+      const tw=doc.getTextWidth(nameLines[0]);
+      doc.setDrawColor(...LG); doc.setLineWidth(0.4);
+      doc.line(tx+3, ty2-1.2, tx+3+tw, ty2-1.2);
+    }
 
     if (hasCant) {
-      doc.setTextColor(...(row.ap?LG:GR));
-      doc.text(name, tx+3, ty2);
-      if(row.ap){const tw=doc.getTextWidth(name);doc.setDrawColor(...LG);doc.setLineWidth(0.4);doc.line(tx+3,ty2-1.2,tx+3+tw,ty2-1.2);}
       let cx2=tx+colW[0];
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GR);
-      doc.text(row.cantidad||'', cx2+colW[1]/2, ty2, {align:'center'}); cx2+=colW[1];
+      doc.text(row.cantidad||'', cx2+colW[1]/2, tyCenter, {align:'center'}); cx2+=colW[1];
       doc.setFont('helvetica','normal');
-      doc.text(row.unidad||'', cx2+colW[2]/2, ty2, {align:'center'}); cx2+=colW[2];
+      doc.text(row.unidad||'', cx2+colW[2]/2, tyCenter, {align:'center'}); cx2+=colW[2];
       if(row.ap){
-        doc.setTextColor(...LG); doc.text(costoStr,cx2+colW[3]/2,ty2,{align:'center'});
+        doc.setTextColor(...LG); doc.text(costoStr, cx2+colW[3]/2, tyCenter, {align:'center'});
         const tw2=doc.getTextWidth(costoStr); doc.setDrawColor(...LG); doc.setLineWidth(0.4);
-        doc.line(cx2+colW[3]/2-tw2/2,ty2-1.2,cx2+colW[3]/2+tw2/2,ty2-1.2);
+        doc.line(cx2+colW[3]/2-tw2/2, tyCenter-1.2, cx2+colW[3]/2+tw2/2, tyCenter-1.2);
       } else {
         doc.setFont('helvetica','bold'); doc.setTextColor(...GR);
-        doc.text(costoStr, cx2+colW[3]/2, ty2, {align:'center'});
+        doc.text(costoStr, cx2+colW[3]/2, tyCenter, {align:'center'});
         if(row.costo) runTotal+=parseFloat(row.costo);
       }
     } else {
-      doc.setTextColor(...(row.ap?LG:GR));
-      doc.text(name, tx+3, ty2);
-      if(row.ap){const tw=doc.getTextWidth(name);doc.setDrawColor(...LG);doc.setLineWidth(0.4);doc.line(tx+3,ty2-1.2,tx+3+tw,ty2-1.2);}
       if(row.ap){
-        doc.setFontSize(8.5); doc.setTextColor(...LG); doc.text(costoStr,tx+colW[0]+colW[1]/2,ty2,{align:'center'});
+        doc.setFontSize(8.5); doc.setTextColor(...LG);
+        doc.text(costoStr, tx+colW[0]+colW[1]/2, tyCenter, {align:'center'});
         const tw2=doc.getTextWidth(costoStr); doc.setDrawColor(...LG); doc.setLineWidth(0.4);
-        doc.line(tx+colW[0]+colW[1]/2-tw2/2,ty2-1.2,tx+colW[0]+colW[1]/2+tw2/2,ty2-1.2);
+        doc.line(tx+colW[0]+colW[1]/2-tw2/2, tyCenter-1.2, tx+colW[0]+colW[1]/2+tw2/2, tyCenter-1.2);
       } else {
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GR);
-        doc.text(costoStr, tx+colW[0]+colW[1]/2, ty2, {align:'center'});
+        doc.text(costoStr, tx+colW[0]+colW[1]/2, tyCenter, {align:'center'});
         if(row.costo) runTotal+=parseFloat(row.costo);
       }
     }
-    ty+=RH;
+    ty+=rowH;
   });
 
   // Total row(s)
