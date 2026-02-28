@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cotizador · Hasan Estudio</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <style>
 :root {
   --orange: #F5A623;
@@ -601,6 +601,15 @@ async function generarPDF() {
   btn.disabled = true;
   btn.textContent = '⏳  Generando...';
   try {
+    // Esperar a que jsPDF esté disponible (útil en móviles con carga lenta)
+    let intentos = 0;
+    while (typeof window.jspdf === 'undefined' && intentos < 20) {
+      await new Promise(r => setTimeout(r, 200));
+      intentos++;
+    }
+    if (typeof window.jspdf === 'undefined') {
+      throw new Error('No se pudo cargar jsPDF. Verifica tu conexión a internet.');
+    }
     await buildPDF();
     toast('✓ PDF generado correctamente', 'ok');
   } catch(e) {
@@ -627,8 +636,8 @@ async function buildPDF() {
 
   const PW=210, PH=297;
   const MR=18;                   // margen derecho original (para header/fecha)
-  const CW = PW * 0.50;          // 50% del ancho de página = 105mm
-  const ML = (PW - CW) / 2;     // margen izquierdo centrado para contenido ≈ 52.5mm
+  const CW = PW * 0.72;          // 72% del ancho de página = ~151mm
+  const ML = (PW - CW) / 2;     // margen izquierdo centrado para contenido ≈ 29.5mm
   const OR=[245,166,35], GR=[58,58,58], LG=[150,150,150], WH=[255,255,255];
 
   // ── LAYOUT CONSTANTS ──────────────────────────────────────────────────────
@@ -727,10 +736,10 @@ async function buildPDF() {
 
   let colW, colLbl;
   if (hasCant) {
-    colW   = [50,14,16,25];   // suma = 105mm
+    colW   = [82,20,22,27];   // suma = 151mm — CONCEPTO bien ancho para textos largos
     colLbl = ['CONCEPTO','CANTIDAD','UNIDAD','COSTO'];
   } else {
-    colW   = [72,33];          // suma = 105mm
+    colW   = [114,37];         // suma = 151mm
     colLbl = ['CONCEPTO','COSTO'];
   }
 
@@ -763,7 +772,16 @@ async function buildPDF() {
 
     const ty2=ty+RH/2+1.5;
     const costoStr=row.costo ? fmtNum(row.costo) : '';
-    const name=row.ap ? `*${row.nombre}` : row.nombre;
+    const rawName=row.ap ? `*${row.nombre}` : row.nombre;
+    // Truncar nombre si es más ancho que la columna CONCEPTO (con padding de 6mm)
+    const truncate=(text, maxW)=>{
+      if(doc.getTextWidth(text)<=maxW) return text;
+      let t=text;
+      while(t.length>1 && doc.getTextWidth(t+'…')>maxW) t=t.slice(0,-1);
+      return t+'…';
+    };
+    const nameMaxW = colW[0]-6;
+    const name = truncate(rawName, nameMaxW);
 
     if (hasCant) {
       doc.setFont('helvetica',row.ap?'italic':'normal'); doc.setFontSize(8.5); doc.setTextColor(...(row.ap?LG:GR));
