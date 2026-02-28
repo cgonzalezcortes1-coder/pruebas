@@ -636,8 +636,8 @@ async function buildPDF() {
 
   const PW=210, PH=297;
   const MR=18;                   // margen derecho original (para header/fecha)
-  const CW = PW * 0.72;          // 72% del ancho de página = ~151mm
-  const ML = (PW - CW) / 2;     // margen izquierdo centrado para contenido ≈ 29.5mm
+  const CW = PW * 0.88;          // 88% del ancho de página ≈ 185mm
+  const ML = (PW - CW) / 2;     // margen izquierdo centrado ≈ 12.5mm
   const OR=[245,166,35], GR=[58,58,58], LG=[150,150,150], WH=[255,255,255];
 
   // ── LAYOUT CONSTANTS ──────────────────────────────────────────────────────
@@ -736,10 +736,10 @@ async function buildPDF() {
 
   let colW, colLbl;
   if (hasCant) {
-    colW   = [82,20,22,27];   // suma = 151mm — CONCEPTO bien ancho para textos largos
+    colW   = [105,22,24,34];   // suma = 185mm — CONCEPTO muy ancho
     colLbl = ['CONCEPTO','CANTIDAD','UNIDAD','COSTO'];
   } else {
-    colW   = [114,37];         // suma = 151mm
+    colW   = [140,45];         // suma = 185mm
     colLbl = ['CONCEPTO','COSTO'];
   }
 
@@ -773,22 +773,24 @@ async function buildPDF() {
     const ty2=ty+RH/2+1.5;
     const costoStr=row.costo ? fmtNum(row.costo) : '';
     const rawName=row.ap ? `*${row.nombre}` : row.nombre;
-    // Truncar nombre si es más ancho que la columna CONCEPTO (con padding de 6mm)
+    const nameMaxW = colW[0]-5;
     const truncate=(text, maxW)=>{
       if(doc.getTextWidth(text)<=maxW) return text;
       let t=text;
       while(t.length>1 && doc.getTextWidth(t+'…')>maxW) t=t.slice(0,-1);
       return t+'…';
     };
-    const nameMaxW = colW[0]-6;
+    // Setear font ANTES de medir para que getTextWidth sea preciso
+    doc.setFont('helvetica', row.ap?'italic':'normal');
+    doc.setFontSize(8.5);
     const name = truncate(rawName, nameMaxW);
 
     if (hasCant) {
-      doc.setFont('helvetica',row.ap?'italic':'normal'); doc.setFontSize(8.5); doc.setTextColor(...(row.ap?LG:GR));
+      doc.setTextColor(...(row.ap?LG:GR));
       doc.text(name, tx+3, ty2);
       if(row.ap){const tw=doc.getTextWidth(name);doc.setDrawColor(...LG);doc.setLineWidth(0.4);doc.line(tx+3,ty2-1.2,tx+3+tw,ty2-1.2);}
       let cx2=tx+colW[0];
-      doc.setFont('helvetica','bold'); doc.setTextColor(...GR);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GR);
       doc.text(row.cantidad||'', cx2+colW[1]/2, ty2, {align:'center'}); cx2+=colW[1];
       doc.setFont('helvetica','normal');
       doc.text(row.unidad||'', cx2+colW[2]/2, ty2, {align:'center'}); cx2+=colW[2];
@@ -802,15 +804,15 @@ async function buildPDF() {
         if(row.costo) runTotal+=parseFloat(row.costo);
       }
     } else {
-      doc.setFont('helvetica',row.ap?'italic':'normal'); doc.setFontSize(8.5); doc.setTextColor(...(row.ap?LG:GR));
+      doc.setTextColor(...(row.ap?LG:GR));
       doc.text(name, tx+3, ty2);
       if(row.ap){const tw=doc.getTextWidth(name);doc.setDrawColor(...LG);doc.setLineWidth(0.4);doc.line(tx+3,ty2-1.2,tx+3+tw,ty2-1.2);}
       if(row.ap){
-        doc.setTextColor(...LG); doc.text(costoStr,tx+colW[0]+colW[1]/2,ty2,{align:'center'});
+        doc.setFontSize(8.5); doc.setTextColor(...LG); doc.text(costoStr,tx+colW[0]+colW[1]/2,ty2,{align:'center'});
         const tw2=doc.getTextWidth(costoStr); doc.setDrawColor(...LG); doc.setLineWidth(0.4);
         doc.line(tx+colW[0]+colW[1]/2-tw2/2,ty2-1.2,tx+colW[0]+colW[1]/2+tw2/2,ty2-1.2);
       } else {
-        doc.setFont('helvetica','bold'); doc.setTextColor(...GR);
+        doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GR);
         doc.text(costoStr, tx+colW[0]+colW[1]/2, ty2, {align:'center'});
         if(row.costo) runTotal+=parseFloat(row.costo);
       }
