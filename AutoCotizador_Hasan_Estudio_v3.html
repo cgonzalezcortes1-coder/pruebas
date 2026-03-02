@@ -854,7 +854,7 @@ async function buildPDF() {
   let ny=ty+6;
   if(hasAp){
     doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...GR);
-    doc.text('*Este rubro se aporta en especie a la producción',ML,ny); ny+=4.5;
+    doc.text('*Este rubro genera un descuento exclusivo para esta producción',ML,ny); ny+=4.5;
   }
   const notasExtra=[...document.querySelectorAll('#notas-list .nota-row input')].map(i=>i.value.trim()).filter(Boolean);
   const notasStd=[];
