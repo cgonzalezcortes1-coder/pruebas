@@ -172,10 +172,33 @@ input:focus, select:focus {
   border-radius: 9px;
   padding: 12px 14px;
   border: 1.5px solid transparent;
-  transition: border-color .15s;
+  transition: border-color .15s, opacity .15s;
   position: relative;
 }
 .task-card:hover { border-color: var(--orange-border); }
+.task-card.dragging { opacity: 0.35; border-color: var(--orange-border); }
+.task-card.drag-over-top {
+  border-top: 2.5px solid var(--orange);
+  margin-top: -1px;
+}
+.task-card.drag-over-bottom {
+  border-bottom: 2.5px solid var(--orange);
+  margin-bottom: -1px;
+}
+
+.task-drag-handle {
+  cursor: grab;
+  color: var(--g500);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 3px 0 0;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity .15s;
+  user-select: none;
+}
+.task-card:hover .task-drag-handle { opacity: 0.8; }
+.task-drag-handle:active { cursor: grabbing; }
 
 .task-card-header {
   display: flex;
@@ -501,6 +524,7 @@ let taskId = 0;
 let tasks = [];
 let activeColorTarget = null;
 let numWeeks = 8;
+let dragSrcId = null;
 
 // ── DATE MODE ─────────────────────────────────────────────────
 function setDateMode(m) {
@@ -552,6 +576,11 @@ function renderTaskCard(t) {
   const hdr = document.createElement('div');
   hdr.className = 'task-card-header';
 
+  const handle = document.createElement('div');
+  handle.className = 'task-drag-handle';
+  handle.innerHTML = '⠿';
+  handle.title = 'Arrastrar para reordenar';
+
   const dot = document.createElement('div');
   dot.className = 'task-color-dot';
   dot.style.background = t.color;
@@ -573,7 +602,72 @@ function renderTaskCard(t) {
     renderGantt();
   };
 
-  hdr.append(dot, nameI, delBtn);
+  hdr.append(handle, dot, nameI, delBtn);
+
+  // ── Drag & Drop ───────────────────────────────────────────
+  card.draggable = true;
+
+  card.addEventListener('dragstart', (e) => {
+    dragSrcId = t.id;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => card.classList.add('dragging'), 0);
+  });
+
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.task-card').forEach(c => {
+      c.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+  });
+
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (dragSrcId === t.id) return;
+    e.dataTransfer.dropEffect = 'move';
+    const rect = card.getBoundingClientRect();
+    const mid  = rect.top + rect.height / 2;
+    document.querySelectorAll('.task-card').forEach(c => {
+      c.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    card.classList.add(e.clientY < mid ? 'drag-over-top' : 'drag-over-bottom');
+  });
+
+  card.addEventListener('dragleave', (e) => {
+    if (!card.contains(e.relatedTarget)) {
+      card.classList.remove('drag-over-top', 'drag-over-bottom');
+    }
+  });
+
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (dragSrcId === t.id) return;
+
+    const rect    = card.getBoundingClientRect();
+    const dropTop = e.clientY < rect.top + rect.height / 2;
+
+    const srcIdx = tasks.findIndex(x => x.id === dragSrcId);
+    let   dstIdx = tasks.findIndex(x => x.id === t.id);
+    if (srcIdx === -1 || dstIdx === -1) return;
+
+    // Remove source and insert at the right position
+    const [moved] = tasks.splice(srcIdx, 1);
+    dstIdx = tasks.findIndex(x => x.id === t.id);
+    tasks.splice(dropTop ? dstIdx : dstIdx + 1, 0, moved);
+
+    // Reorder DOM
+    const list    = document.getElementById('task-list');
+    const srcCard = document.getElementById('tc-' + moved.id);
+    if (dropTop) {
+      card.before(srcCard);
+    } else {
+      card.after(srcCard);
+    }
+
+    document.querySelectorAll('.task-card').forEach(c => {
+      c.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    renderGantt();
+  });
 
   // ── Range (Semana + Día) ───────────────────────────────────
   const range = document.createElement('div');
