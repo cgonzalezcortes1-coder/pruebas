@@ -1750,7 +1750,7 @@ async function buildPDF() {
 
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
-  doc.rect(MARGIN, TITLE_Y, CONTENT_W, TITLE_H + HDR_H + data.tasks.length * ROW_H);
+  doc.rect(MARGIN, TITLE_Y, CONTENT_W, TITLE_H + 4 + HDR_H + data.tasks.length * ROW_H);
 
   // ── LABEL / GRID DIVIDER ─────────────────────────────────
   doc.setDrawColor(245, 166, 35, 0.3);
