@@ -281,6 +281,31 @@ input:focus, select:focus {
   font-weight: 600;
 }
 
+/* Window duration */
+.window-dur-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+}
+.window-dur-wrap label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--g500);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.window-days-input {
+  width: 62px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.window-dur-unit {
+  font-size: 11px;
+  color: var(--g500);
+}
+
 /* Note field */
 .task-note-wrap {
   margin-top: 8px;
@@ -660,7 +685,7 @@ function getNumWeeks() {
 function addTask(name='', color='', startDay=1, endDay=7, type='bar') {
   const id = ++taskId;
   const col = color || TASK_COLORS[(tasks.length) % TASK_COLORS.length];
-  const obj = { id, name, color: col, type, note: '', stages: [{ startDay, endDay }] };
+  const obj = { id, name, color: col, type, note: '', stages: [{ startDay, endDay }], windowDays: 5 };
   tasks.push(obj);
   renderTaskCard(obj);
   renderGantt();
@@ -956,7 +981,38 @@ function renderTaskCard(t) {
   typeRow.append(
     mkType('▬ Barra', 'bar'),
     mkType('◆ Evento', 'milestone'),
+    mkType('▭ Ventana', 'window'),
   );
+
+  // ── Window duration ───────────────────────────────────────
+  const windowDurWrap = document.createElement('div');
+  windowDurWrap.className = 'window-dur-wrap';
+  windowDurWrap.style.display = t.type === 'window' ? 'flex' : 'none';
+
+  const wdLabel = document.createElement('label');
+  wdLabel.textContent = 'Duración';
+  const wdInput = document.createElement('input');
+  wdInput.type = 'number';
+  wdInput.min = 1;
+  wdInput.value = t.windowDays || 5;
+  wdInput.className = 'window-days-input';
+  wdInput.oninput = () => {
+    t.windowDays = Math.max(1, parseInt(wdInput.value) || 1);
+    renderGantt();
+  };
+  const wdUnit = document.createElement('span');
+  wdUnit.className = 'window-dur-unit';
+  wdUnit.textContent = 'días';
+  windowDurWrap.append(wdLabel, wdInput, wdUnit);
+
+  // Show/hide windowDurWrap when type changes
+  typeRow.querySelectorAll('.type-btn').forEach(btn => {
+    const origClick = btn.onclick;
+    btn.onclick = (e) => {
+      origClick && origClick(e);
+      windowDurWrap.style.display = t.type === 'window' ? 'flex' : 'none';
+    };
+  });
 
   // ── Note ──────────────────────────────────────────────────
   const noteWrap = document.createElement('div');
@@ -985,7 +1041,7 @@ function renderTaskCard(t) {
   };
 
   noteWrap.append(noteToggle, noteField);
-  card.append(hdr, stagesContainer, typeRow, noteWrap);
+  card.append(hdr, stagesContainer, typeRow, windowDurWrap, noteWrap);
   list.appendChild(card);
 }
 
@@ -1257,6 +1313,52 @@ function drawGantt(canvas, data, scale) {
       ctx.strokeStyle = 'rgba(0,0,0,0.15)';
       ctx.lineWidth = 1;
       ctx.stroke();
+    } else if (task.type === 'window') {
+      const bx  = LABEL_W + s * DAY_W;
+      const bw  = (e - s + 1) * DAY_W;
+      const bh  = 16;
+      const by  = ry + (ROW_H - bh)/2;
+      const rad = 5;
+      const [cr,cg,cb] = hexToRgb(task.color);
+
+      // Outer hollow bar — very light fill + dashed border
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},0.08)`;
+      roundRect(ctx, bx, by, bw, bh, rad);
+      ctx.fill();
+
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = task.color;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, bx, by, bw, bh, rad);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Inner mini-bar centered
+      const wd = task.windowDays || 5;
+      const windowRange = e - s + 1;
+      const miniW = Math.max(DAY_W, Math.min(wd / windowRange, 1) * bw);
+      const miniX = bx + (bw - miniW) / 2;
+      const miniBh = 8;
+      const miniBy = by + (bh - miniBh) / 2;
+
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetY = 1;
+      ctx.fillStyle = task.color;
+      roundRect(ctx, miniX, miniBy, miniW, miniBh, 3);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Duration label inside mini-bar
+      if (miniW >= 22) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px "DM Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${wd}d`, miniX + miniW / 2, miniBy + miniBh / 2 + 3);
+        ctx.textAlign = 'left';
+      }
     } else {
       // Skip weekend days for visual - draw segments between weekends
       const bx  = LABEL_W + s * DAY_W;
@@ -1487,6 +1589,42 @@ async function buildPDF() {
       const ms = 2.8;
       doc.setFillColor(...col);
       doc.lines([[ms,-ms],[ms,ms],[-ms,ms],[-ms,-ms]], mx, my - ms, [1,1], 'F');
+    } else if (task.type === 'window') {
+      const bx = MARGIN + LABEL_W + s * DAY_W;
+      const bw = (e - s + 1) * DAY_W;
+      const bh = 5.5;
+      const by = ry + (ROW_H - bh)/2;
+
+      // Outer hollow bar — very light fill + dashed stroke
+      doc.setGState(doc.GState({opacity: 0.08}));
+      doc.setFillColor(...col);
+      doc.roundedRect(bx, by, bw, bh, 1.2, 1.2, 'F');
+      doc.setGState(doc.GState({opacity: 1}));
+
+      doc.setDrawColor(...col);
+      doc.setLineWidth(0.4);
+      doc.setLineDashPattern([1.2, 0.9], 0);
+      doc.roundedRect(bx, by, bw, bh, 1.2, 1.2, 'S');
+      doc.setLineDashPattern([], 0);
+
+      // Inner mini-bar centered
+      const wd = task.windowDays || 5;
+      const windowRange = e - s + 1;
+      const miniW = Math.max(DAY_W, Math.min(wd / windowRange, 1) * bw);
+      const miniX = bx + (bw - miniW) / 2;
+      const miniBh = 2.8;
+      const miniBy = by + (bh - miniBh) / 2;
+
+      doc.setFillColor(...col);
+      doc.roundedRect(miniX, miniBy, miniW, miniBh, 0.8, 0.8, 'F');
+
+      // Duration label inside mini-bar
+      if (miniW >= 7) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(4.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${wd}d`, miniX + miniW / 2, miniBy + miniBh / 2 + 1.4, { align: 'center' });
+      }
     } else {
       const bx = MARGIN + LABEL_W + s * DAY_W;
       const bw = (e - s + 1) * DAY_W;
