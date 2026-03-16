@@ -1547,7 +1547,9 @@ async function buildPDF() {
   const PW = MARGIN * 2 + CONTENT_W;
   const PH = MARGIN * 2 + TITLE_H + 4 + HDR_H + data.tasks.length * ROW_H + 10;
 
-  const doc = new jsPDF({ unit: 'mm', format: [PW, PH] });
+  // jsPDF normalizes custom formats to [short, long], so pass [PH, PW] + landscape
+  // and it will swap them → page ends up PW wide × PH tall
+  const doc = new jsPDF({ unit: 'mm', format: [PH, PW], orientation: 'landscape' });
 
   const TITLE_Y = MARGIN;
   const HDR_Y   = TITLE_Y + TITLE_H + 4;
