@@ -1523,32 +1523,31 @@ async function generatePDF() {
 async function buildPDF() {
   const { jsPDF } = window.jspdf;
 
-  // A4 landscape
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const PW = 297, PH = 210;
-
   const data = getGanttData();
 
-  // ── Layout constants ─────────────────────────────────────
-  const MARGIN  = 14;
-  const TITLE_H = 20;
+  // ── Layout constants (page size adapts to content) ────────
+  const MARGIN  = 12;
+  const TITLE_H = 18;
   const WEEK_H  = 8;
   const DAY_H   = 7;
   const HDR_H   = WEEK_H + DAY_H;
+  const ROW_H   = 10;          // comfortable fixed row height
+  const DAY_W   = 5.5;         // mm per day column — same ratio as the preview
 
-  // Dynamic row height: fills available page height, capped 10–22 mm
-  const availBodyH = PH - MARGIN * 2 - TITLE_H - 4 - HDR_H - 6;
-  const ROW_H   = Math.min(22, Math.max(10, availBodyH / data.tasks.length));
+  const LABEL_W   = 50;
+  const GRID_W    = data.totalDays * DAY_W;
+  const CONTENT_W = LABEL_W + GRID_W;
 
-  // Bar heights scale with row height
+  // Bar heights proportional to row
   const BAR_H     = ROW_H * 0.58;
   const MINIBAR_H = ROW_H * 0.30;
   const MS_SIZE   = ROW_H * 0.32;
 
-  const CONTENT_W = PW - MARGIN * 2;
-  const LABEL_W   = 50;
-  const GRID_W    = CONTENT_W - LABEL_W;
-  const DAY_W     = GRID_W / data.totalDays;
+  // Page dimensions derived from content
+  const PW = MARGIN * 2 + CONTENT_W;
+  const PH = MARGIN * 2 + TITLE_H + 4 + HDR_H + data.tasks.length * ROW_H + 10;
+
+  const doc = new jsPDF({ unit: 'mm', format: [PW, PH] });
 
   const TITLE_Y = MARGIN;
   const HDR_Y   = TITLE_Y + TITLE_H + 4;
@@ -1566,13 +1565,13 @@ async function buildPDF() {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(...WH);
-  doc.text(data.title, MARGIN + 6, TITLE_Y + 13);
+  doc.text(data.title, MARGIN + 6, TITLE_Y + 11);
 
   if (data.subtitle) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(255, 235, 180);
-    doc.text(data.subtitle, MARGIN + 6, TITLE_Y + 18);
+    doc.text(data.subtitle, MARGIN + 6, TITLE_Y + 16);
   }
 
   doc.setFont('helvetica', 'bold');
