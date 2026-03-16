@@ -281,6 +281,65 @@ input:focus, select:focus {
   font-weight: 600;
 }
 
+/* Note field */
+.task-note-wrap {
+  margin-top: 8px;
+}
+.task-note-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10.5px;
+  color: var(--g500);
+  font-family: 'DM Sans', sans-serif;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color .12s;
+}
+.task-note-toggle:hover { color: var(--orange); }
+.task-note-toggle .note-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+.task-note-input {
+  width: 100%;
+  margin-top: 6px;
+  border: 1.5px solid var(--g200);
+  border-radius: 7px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--g700);
+  background: var(--white);
+  outline: none;
+  transition: border-color .12s;
+}
+.task-note-input:focus { border-color: var(--orange); }
+
+/* Notes panel below canvas */
+#notes-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+.note-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--g700);
+  font-family: 'DM Sans', sans-serif;
+}
+.note-entry-marker {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* Color picker popup */
 .color-popup {
   position: absolute;
@@ -487,7 +546,8 @@ input:focus, select:focus {
     <div id="gantt-wrap">
       <canvas id="gantt-canvas"></canvas>
     </div>
-    <p style="font-size:11px;color:var(--g500);text-align:center">
+    <div id="notes-panel"></div>
+    <p style="font-size:11px;color:var(--g500);text-align:center;margin-top:8px">
       El PDF se exporta en A4 horizontal con el branding de Hasan Estudio
     </p>
   </div>
@@ -546,7 +606,7 @@ function getNumWeeks() {
 function addTask(name='', color='', startDay=1, endDay=7, type='bar') {
   const id = ++taskId;
   const col = color || TASK_COLORS[(tasks.length) % TASK_COLORS.length];
-  const obj = { id, name, color: col, startDay, endDay, type };
+  const obj = { id, name, color: col, startDay, endDay, type, note: '' };
   tasks.push(obj);
   renderTaskCard(obj);
   renderGantt();
@@ -811,7 +871,34 @@ function renderTaskCard(t) {
     mkType('◆ Evento', 'milestone'),
   );
 
-  card.append(hdr, range, typeRow);
+  // ── Note ──────────────────────────────────────────────────
+  const noteWrap = document.createElement('div');
+  noteWrap.className = 'task-note-wrap';
+
+  const noteToggle = document.createElement('button');
+  noteToggle.className = 'task-note-toggle';
+  noteToggle.innerHTML = t.note ? '✎ Nota <span class="note-dot"></span>' : '✎ Agregar nota';
+
+  const noteField = document.createElement('input');
+  noteField.className = 'task-note-input';
+  noteField.type = 'text';
+  noteField.placeholder = 'Nota breve para esta sección…';
+  noteField.value = t.note || '';
+  noteField.style.display = t.note ? 'block' : 'none';
+  noteField.oninput = () => {
+    t.note = noteField.value;
+    noteToggle.innerHTML = t.note ? '✎ Nota <span class="note-dot"></span>' : '✎ Agregar nota';
+    renderGantt();
+  };
+
+  noteToggle.onclick = () => {
+    const open = noteField.style.display === 'block';
+    noteField.style.display = open ? 'none' : 'block';
+    if (!open) noteField.focus();
+  };
+
+  noteWrap.append(noteToggle, noteField);
+  card.append(hdr, range, typeRow, noteWrap);
   list.appendChild(card);
 }
 
@@ -859,6 +946,25 @@ document.addEventListener('click', () => {
 function renderGantt() {
   const canvas = document.getElementById('gantt-canvas');
   drawGantt(canvas, getGanttData(), 1);
+  renderNotes();
+}
+
+function renderNotes() {
+  const panel = document.getElementById('notes-panel');
+  panel.innerHTML = '';
+  const noted = tasks.filter(t => t.note && t.note.trim() !== '');
+  noted.forEach((t, i) => {
+    const entry = document.createElement('div');
+    entry.className = 'note-entry';
+    const marker = document.createElement('span');
+    marker.className = 'note-entry-marker';
+    marker.style.color = t.color;
+    marker.textContent = '*';
+    const text = document.createElement('span');
+    text.textContent = (t.name || '—') + ' — ' + t.note.trim();
+    entry.append(marker, text);
+    panel.appendChild(entry);
+  });
 }
 
 function getGanttData() {
@@ -1016,13 +1122,24 @@ function drawGantt(canvas, data, scale) {
     ctx.fillStyle = '#333333';
     ctx.font = '11px "DM Sans", sans-serif';
     ctx.textAlign = 'left';
-    // Truncate label
+    // Truncate label (reserve space for * if note exists)
+    const hasNote = task.note && task.note.trim() !== '';
+    const maxLblW = LABEL_W - 20 - (hasNote ? 10 : 0);
     let lbl = task.name || '—';
-    while (ctx.measureText(lbl).width > LABEL_W - 20 && lbl.length > 3) {
+    while (ctx.measureText(lbl).width > maxLblW && lbl.length > 3) {
       lbl = lbl.slice(0,-1);
     }
     if (lbl !== task.name) lbl += '…';
     ctx.fillText(lbl, 14, ry + ROW_H/2 + 4);
+    // Draw * marker if note exists
+    if (hasNote) {
+      const lblW = ctx.measureText(lbl).width;
+      ctx.fillStyle = task.color;
+      ctx.font = 'bold 11px "DM Sans", sans-serif';
+      ctx.fillText('*', 14 + lblW + 3, ry + ROW_H/2 + 4);
+      ctx.fillStyle = '#333333';
+      ctx.font = '11px "DM Sans", sans-serif';
+    }
 
     // Weekend shading on row
     for (let i=0; i<totalDays; i++) {
