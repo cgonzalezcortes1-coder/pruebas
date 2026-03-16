@@ -1090,6 +1090,73 @@ function renderGantt() {
   const canvas = document.getElementById('gantt-canvas');
   drawGantt(canvas, getGanttData(), 1);
   renderNotes();
+  saveState();
+}
+
+// ── PERSIST STATE ─────────────────────────────────────────────
+function saveState() {
+  try {
+    const state = {
+      title:     document.getElementById('f-title')?.value    || '',
+      subtitle:  document.getElementById('f-subtitle')?.value || '',
+      dateMode,
+      startDate: document.getElementById('f-startdate')?.value  || '',
+      numWeeks:  document.getElementById('f-numweeks')?.value   || '8',
+      numWeeks2: document.getElementById('f-numweeks2')?.value  || '8',
+      weekLabel: document.getElementById('f-weeklabel')?.value  || 'Week',
+      tasks: tasks.map(({ name, color, type, note, stages, windowDays }) => ({
+        name, color, type, note, windowDays,
+        stages: (stages || []).map(({ startDay, endDay }) => ({ startDay, endDay }))
+      }))
+    };
+    localStorage.setItem('gantt-hasan', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('gantt-hasan');
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+
+    // Restore form fields first so week selects build with the right numWeeks
+    if (s.title     !== undefined) document.getElementById('f-title').value     = s.title;
+    if (s.subtitle  !== undefined) document.getElementById('f-subtitle').value  = s.subtitle;
+    if (s.startDate)               document.getElementById('f-startdate').value = s.startDate;
+    if (s.numWeeks)                document.getElementById('f-numweeks').value  = s.numWeeks;
+    if (s.numWeeks2)               document.getElementById('f-numweeks2').value = s.numWeeks2;
+    if (s.weekLabel)               document.getElementById('f-weeklabel').value = s.weekLabel;
+
+    // Restore dateMode UI without triggering renderGantt
+    if (s.dateMode) {
+      dateMode = s.dateMode;
+      document.getElementById('mode-weeks').classList.toggle('active', s.dateMode === 'weeks');
+      document.getElementById('mode-dates').classList.toggle('active', s.dateMode === 'dates');
+      document.getElementById('sec-weeks').style.display = s.dateMode === 'weeks' ? '' : 'none';
+      document.getElementById('sec-dates').style.display = s.dateMode === 'dates' ? '' : 'none';
+    }
+
+    // Restore tasks
+    if (s.tasks?.length) {
+      s.tasks.forEach(td => {
+        const id = ++taskId;
+        const obj = {
+          id,
+          name:       td.name       || '',
+          color:      td.color      || '#4CAF50',
+          type:       td.type       || 'bar',
+          note:       td.note       || '',
+          windowDays: td.windowDays || 5,
+          stages:     td.stages?.length ? td.stages : [{ startDay: 1, endDay: 7 }]
+        };
+        tasks.push(obj);
+        renderTaskCard(obj);
+      });
+    }
+    return true;
+  } catch(e) {
+    return false;
+  }
 }
 
 function renderNotes() {
@@ -1464,14 +1531,22 @@ async function buildPDF() {
 
   // ── Layout constants ─────────────────────────────────────
   const MARGIN  = 14;
-  const TITLE_H = 18;
-  const WEEK_H  = 7;
-  const DAY_H   = 6;
-  const ROW_H   = 9;
+  const TITLE_H = 20;
+  const WEEK_H  = 8;
+  const DAY_H   = 7;
   const HDR_H   = WEEK_H + DAY_H;
 
+  // Dynamic row height: fills available page height, capped 10–22 mm
+  const availBodyH = PH - MARGIN * 2 - TITLE_H - 4 - HDR_H - 6;
+  const ROW_H   = Math.min(22, Math.max(10, availBodyH / data.tasks.length));
+
+  // Bar heights scale with row height
+  const BAR_H     = ROW_H * 0.58;
+  const MINIBAR_H = ROW_H * 0.30;
+  const MS_SIZE   = ROW_H * 0.32;
+
   const CONTENT_W = PW - MARGIN * 2;
-  const LABEL_W   = 48;
+  const LABEL_W   = 50;
   const GRID_W    = CONTENT_W - LABEL_W;
   const DAY_W     = GRID_W / data.totalDays;
 
@@ -1491,13 +1566,13 @@ async function buildPDF() {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(...WH);
-  doc.text(data.title, MARGIN + 6, TITLE_Y + 11);
+  doc.text(data.title, MARGIN + 6, TITLE_Y + 13);
 
   if (data.subtitle) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(255, 235, 180);
-    doc.text(data.subtitle, MARGIN + 6, TITLE_Y + 16);
+    doc.text(data.subtitle, MARGIN + 6, TITLE_Y + 18);
   }
 
   doc.setFont('helvetica', 'bold');
@@ -1530,7 +1605,7 @@ async function buildPDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(...GR);
-    doc.text(ws.label, x + bw/2, HDR_Y + 4.8, { align: 'center' });
+    doc.text(ws.label, x + bw/2, HDR_Y + 5.5, { align: 'center' });
   });
 
   // ── DAY HEADERS ───────────────────────────────────────────
@@ -1542,7 +1617,7 @@ async function buildPDF() {
     doc.setFont('helvetica', isWE ? 'normal' : '500');
     doc.setFontSize(5.5);
     doc.setTextColor(...(isWE ? [170,170,170] : [100,100,100]));
-    doc.text(lbl, x + DAY_W/2, HDR_Y + WEEK_H + 4.2, { align: 'center' });
+    doc.text(lbl, x + DAY_W/2, HDR_Y + WEEK_H + 4.8, { align: 'center' });
   });
 
   // ── TASK ROWS ─────────────────────────────────────────────
@@ -1586,13 +1661,13 @@ async function buildPDF() {
     if (task.type === 'milestone') {
       const mx = MARGIN + LABEL_W + s * DAY_W + DAY_W/2;
       const my = ry + ROW_H/2;
-      const ms = 2.8;
+      const ms = MS_SIZE;
       doc.setFillColor(...col);
       doc.lines([[ms,-ms],[ms,ms],[-ms,ms],[-ms,-ms]], mx, my - ms, [1,1], 'F');
     } else if (task.type === 'window') {
       const bx = MARGIN + LABEL_W + s * DAY_W;
       const bw = (e - s + 1) * DAY_W;
-      const bh = 5.5;
+      const bh = BAR_H;
       const by = ry + (ROW_H - bh)/2;
 
       // Outer hollow bar — very light fill + dashed stroke
@@ -1612,7 +1687,7 @@ async function buildPDF() {
       const windowRange = e - s + 1;
       const miniW = Math.max(DAY_W, Math.min(wd / windowRange, 1) * bw);
       const miniX = bx + (bw - miniW) / 2;
-      const miniBh = 2.8;
+      const miniBh = MINIBAR_H;
       const miniBy = by + (bh - miniBh) / 2;
 
       doc.setFillColor(...col);
@@ -1628,7 +1703,7 @@ async function buildPDF() {
     } else {
       const bx = MARGIN + LABEL_W + s * DAY_W;
       const bw = (e - s + 1) * DAY_W;
-      const bh = 5.5;
+      const bh = BAR_H;
       const by = ry + (ROW_H - bh)/2;
 
       doc.setFillColor(...col);
@@ -1705,18 +1780,19 @@ function toast(msg, type='') {
 
 // ── INIT ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Default date
+  // Default date (may be overwritten by loadState)
   const today = new Date();
-  const iso = today.toISOString().slice(0,10);
-  document.getElementById('f-startdate').value = iso;
+  document.getElementById('f-startdate').value = today.toISOString().slice(0,10);
 
-  // Load default tasks (semana inicio, día inicio, semana fin, día fin)
-  addTaskW('Dialog Editing',       '#4CAF50', 1,1, 5,5);
-  addTaskW('Foley Editing',        '#FFD600', 1,1, 5,5);
-  addTaskW('Backgrounds Editing',  '#FF9800', 1,1, 5,5);
-  addTaskW('Sound Effects Editing','#AA00FF', 1,1, 5,5);
-  addTaskW('Premix',               '#00BCD4', 6,1, 7,3);
-  addTaskW('Final Mix',            '#E53935', 7,4, 8,3);
+  if (!loadState()) {
+    // No saved state → load example tasks
+    addTaskW('Dialog Editing',       '#4CAF50', 1,1, 5,5);
+    addTaskW('Foley Editing',        '#FFD600', 1,1, 5,5);
+    addTaskW('Backgrounds Editing',  '#FF9800', 1,1, 5,5);
+    addTaskW('Sound Effects Editing','#AA00FF', 1,1, 5,5);
+    addTaskW('Premix',               '#00BCD4', 6,1, 7,3);
+    addTaskW('Final Mix',            '#E53935', 7,4, 8,3);
+  }
 
   renderGantt();
 });
