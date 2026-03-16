@@ -320,6 +320,60 @@ input:focus, select:focus {
 }
 .task-note-input:focus { border-color: var(--orange); }
 
+/* Stage rows */
+.stages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 4px;
+}
+.stage-row {
+  border: 1px solid var(--g200);
+  border-radius: 7px;
+  padding: 7px 10px 9px;
+  background: var(--white);
+}
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.stage-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--orange-d);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stage-remove {
+  width: 16px; height: 16px;
+  border: none;
+  background: rgba(192,57,43,0.10);
+  color: #C0392B;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  padding: 0; line-height: 1;
+}
+.stage-remove:hover { background: #C0392B; color: white; }
+.btn-add-stage {
+  width: 100%;
+  padding: 5px;
+  border: 1.5px dashed var(--g200);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  color: var(--g500);
+  transition: all .13s;
+  margin-top: 2px;
+}
+.btn-add-stage:hover { border-color: var(--orange-border); color: var(--orange-d); }
+
 /* Notes panel below canvas */
 #notes-panel {
   display: flex;
@@ -606,7 +660,7 @@ function getNumWeeks() {
 function addTask(name='', color='', startDay=1, endDay=7, type='bar') {
   const id = ++taskId;
   const col = color || TASK_COLORS[(tasks.length) % TASK_COLORS.length];
-  const obj = { id, name, color: col, startDay, endDay, type, note: '' };
+  const obj = { id, name, color: col, type, note: '', stages: [{ startDay, endDay }] };
   tasks.push(obj);
   renderTaskCard(obj);
   renderGantt();
@@ -620,8 +674,10 @@ function addTaskW(name, color, sw, sd, ew, ed, type='bar') {
 // Rebuild week selects when numWeeks changes
 function rebuildWeekSelects() {
   tasks.forEach(t => {
-    if (t._swSel) t._swSel.rebuild();
-    if (t._ewSel) t._ewSel.rebuild();
+    (t._stageSels || []).forEach(ss => {
+      if (ss.swSel) ss.swSel.rebuild();
+      if (ss.ewSel) ss.ewSel.rebuild();
+    });
   });
 }
 
@@ -729,125 +785,156 @@ function renderTaskCard(t) {
     renderGantt();
   });
 
-  // ── Range (Semana + Día) ───────────────────────────────────
-  const range = document.createElement('div');
-  range.className = 'task-range';
-
+  // ── Stages (multi-segment ranges) ─────────────────────────
   const DAY_NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-
-  // Convert absolute day → {week, dow}  (1-indexed)
   const dayToWD = d => ({ w: Math.ceil(d/7), dow: ((d-1)%7)+1 });
-  // Convert {week, dow} → absolute day
   const wdToDay = (w, dow) => (w-1)*7 + dow;
 
-  const nw = () => getNumWeeks();
+  const stagesContainer = document.createElement('div');
+  stagesContainer.className = 'stages-container';
+  t._stageSels = [];
 
-  // Build week options
-  const mkWeekSel = (val, onChange) => {
-    const wrap = document.createElement('div');
-    const l = document.createElement('label'); l.textContent = 'Semana';
-    const sel = document.createElement('select');
-    sel.style.cssText = 'font-size:11.5px;padding:5px 7px;background:var(--white)';
-    const rebuild = () => {
-      const cur = parseInt(sel.value) || val;
-      sel.innerHTML = '';
-      for (let i=1; i<=getNumWeeks(); i++) {
-        const o = document.createElement('option');
-        o.value = i; o.textContent = `Sem ${i}`;
-        if (i === cur) o.selected = true;
-        sel.appendChild(o);
+  function refreshStages() {
+    stagesContainer.innerHTML = '';
+    t._stageSels = [];
+
+    t.stages.forEach((stage, si) => {
+      const wd0 = dayToWD(stage.startDay);
+      const wd1 = dayToWD(stage.endDay);
+      stage.startWeek = wd0.w;  stage.startDow = wd0.dow;
+      stage.endWeek   = wd1.w;  stage.endDow   = wd1.dow;
+
+      const mkWeekSel = (val, onChange) => {
+        const wrap = document.createElement('div');
+        const l = document.createElement('label'); l.textContent = 'Semana';
+        const sel = document.createElement('select');
+        sel.style.cssText = 'font-size:11.5px;padding:5px 7px;background:var(--white)';
+        const rebuild = () => {
+          const cur = parseInt(sel.value) || val;
+          sel.innerHTML = '';
+          for (let i=1; i<=getNumWeeks(); i++) {
+            const o = document.createElement('option');
+            o.value = i; o.textContent = `Sem ${i}`;
+            if (i === cur) o.selected = true;
+            sel.appendChild(o);
+          }
+        };
+        rebuild();
+        sel.oninput = () => { onChange(parseInt(sel.value)); renderGantt(); };
+        sel._rebuild = rebuild;
+        wrap.append(l, sel);
+        return { wrap, sel, rebuild };
+      };
+
+      const mkDaySel = (val, onChange) => {
+        const wrap = document.createElement('div');
+        const l = document.createElement('label'); l.textContent = 'Día';
+        const sel = document.createElement('select');
+        sel.style.cssText = 'font-size:11.5px;padding:5px 7px;background:var(--white)';
+        DAY_NAMES.forEach((d,i) => {
+          const o = document.createElement('option');
+          o.value = i+1; o.textContent = d;
+          if (i+1 === val) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.oninput = () => { onChange(parseInt(sel.value)); renderGantt(); };
+        wrap.append(l, sel);
+        return { wrap, sel };
+      };
+
+      const sw = mkWeekSel(stage.startWeek, v => {
+        stage.startWeek = v;
+        stage.startDay  = wdToDay(v, stage.startDow);
+        if (stage.startDay > stage.endDay) {
+          stage.endWeek = v; stage.endDow = stage.startDow;
+          stage.endDay  = stage.startDay;
+          ew.sel.value = v; ed.sel.value = stage.startDow;
+        }
+      });
+      const sd = mkDaySel(stage.startDow, v => {
+        stage.startDow = v;
+        stage.startDay = wdToDay(stage.startWeek, v);
+        if (stage.startDay > stage.endDay) {
+          stage.endWeek = stage.startWeek; stage.endDow = v;
+          stage.endDay  = stage.startDay;
+          ew.sel.value = stage.startWeek; ed.sel.value = v;
+        }
+      });
+      const ew = mkWeekSel(stage.endWeek, v => {
+        stage.endWeek = v;
+        stage.endDay  = wdToDay(v, stage.endDow);
+        if (stage.endDay < stage.startDay) {
+          stage.startWeek = v; stage.startDow = stage.endDow;
+          stage.startDay  = stage.endDay;
+          sw.sel.value = v; sd.sel.value = stage.endDow;
+        }
+      });
+      const ed = mkDaySel(stage.endDow, v => {
+        stage.endDow = v;
+        stage.endDay = wdToDay(stage.endWeek, v);
+        if (stage.endDay < stage.startDay) {
+          stage.startWeek = stage.endWeek; stage.startDow = v;
+          stage.startDay  = stage.endDay;
+          sw.sel.value = stage.endWeek; sd.sel.value = v;
+        }
+      });
+
+      t._stageSels.push({ swSel: sw, ewSel: ew });
+
+      // Stage header
+      const stageHdr = document.createElement('div');
+      stageHdr.className = 'stage-header';
+      const stageLbl = document.createElement('span');
+      stageLbl.className = 'stage-label';
+      stageLbl.textContent = t.stages.length > 1 ? `Seg ${si + 1}` : 'Rango';
+      stageHdr.appendChild(stageLbl);
+      if (t.stages.length > 1) {
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'stage-remove';
+        removeBtn.innerHTML = '×';
+        removeBtn.onclick = () => { t.stages.splice(si, 1); refreshStages(); renderGantt(); };
+        stageHdr.appendChild(removeBtn);
       }
-    };
-    rebuild();
-    sel.oninput = () => { onChange(parseInt(sel.value)); renderGantt(); };
-    sel._rebuild = rebuild;
-    wrap.append(l, sel);
-    return { wrap, sel, rebuild };
-  };
 
-  const mkDaySel = (val, onChange) => {
-    const wrap = document.createElement('div');
-    const l = document.createElement('label'); l.textContent = 'Día';
-    const sel = document.createElement('select');
-    sel.style.cssText = 'font-size:11.5px;padding:5px 7px;background:var(--white)';
-    DAY_NAMES.forEach((d,i) => {
-      const o = document.createElement('option');
-      o.value = i+1; o.textContent = d;
-      if (i+1 === val) o.selected = true;
-      sel.appendChild(o);
+      // Selectors layout
+      const iLbl = document.createElement('div');
+      iLbl.style.cssText = 'font-size:9px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px';
+      iLbl.textContent = 'Inicio';
+      const fLbl = document.createElement('div');
+      fLbl.style.cssText = 'font-size:9px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;margin-top:4px';
+      fLbl.textContent = 'Fin';
+      const sg = document.createElement('div');
+      sg.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
+      sg.append(sw.wrap, sd.wrap);
+      const eg = document.createElement('div');
+      eg.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
+      eg.append(ew.wrap, ed.wrap);
+      const stageBody = document.createElement('div');
+      stageBody.style.cssText = 'display:flex;flex-direction:column;gap:0';
+      stageBody.append(iLbl, sg, fLbl, eg);
+
+      const stageRow = document.createElement('div');
+      stageRow.className = 'stage-row';
+      stageRow.append(stageHdr, stageBody);
+      stagesContainer.appendChild(stageRow);
     });
-    sel.oninput = () => { onChange(parseInt(sel.value)); renderGantt(); };
-    wrap.append(l, sel);
-    return { wrap, sel };
-  };
 
-  const startWD = dayToWD(t.startDay);
-  const endWD   = dayToWD(t.endDay);
+    // Add segment button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-stage';
+    addBtn.innerHTML = '＋ Agregar segmento';
+    addBtn.onclick = () => {
+      const last = t.stages[t.stages.length - 1];
+      const newStart = Math.min(last.endDay + 1, getNumWeeks() * 7 - 6);
+      const newEnd   = Math.min(newStart + 6, getNumWeeks() * 7);
+      t.stages.push({ startDay: newStart, endDay: newEnd });
+      refreshStages();
+      renderGantt();
+    };
+    stagesContainer.appendChild(addBtn);
+  }
 
-  // Store week/dow on task for easy reference
-  t.startWeek = startWD.w;  t.startDow = startWD.dow;
-  t.endWeek   = endWD.w;    t.endDow   = endWD.dow;
-
-  const sw = mkWeekSel(t.startWeek, v => {
-    t.startWeek = v;
-    t.startDay  = wdToDay(v, t.startDow);
-    if (t.startDay > t.endDay) {
-      t.endWeek = v; t.endDow = t.startDow;
-      t.endDay  = t.startDay;
-      ew.sel.value = v; ed.sel.value = t.startDow;
-    }
-  });
-  const sd = mkDaySel(t.startDow, v => {
-    t.startDow = v;
-    t.startDay = wdToDay(t.startWeek, v);
-    if (t.startDay > t.endDay) {
-      t.endWeek = t.startWeek; t.endDow = v;
-      t.endDay  = t.startDay;
-      ew.sel.value = t.startWeek; ed.sel.value = v;
-    }
-  });
-
-  const ew = mkWeekSel(t.endWeek, v => {
-    t.endWeek = v;
-    t.endDay  = wdToDay(v, t.endDow);
-    if (t.endDay < t.startDay) {
-      t.startWeek = v; t.startDow = t.endDow;
-      t.startDay  = t.endDay;
-      sw.sel.value = v; sd.sel.value = t.endDow;
-    }
-  });
-  const ed = mkDaySel(t.endDow, v => {
-    t.endDow = v;
-    t.endDay = wdToDay(t.endWeek, v);
-    if (t.endDay < t.startDay) {
-      t.startWeek = t.endWeek; t.startDow = v;
-      t.startDay  = t.endDay;
-      sw.sel.value = t.endWeek; sd.sel.value = v;
-    }
-  });
-
-  // Store refs for rebuilding when numWeeks changes
-  t._swSel = sw; t._ewSel = ew;
-
-  // Layout: Start row + End row
-  const startRow = document.createElement('div');
-  startRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px';
-  const startLbl = document.createElement('div');
-  startLbl.style.cssText = 'grid-column:1/-1;font-size:9px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px';
-  startLbl.textContent = 'Inicio';
-  const endLbl = document.createElement('div');
-  endLbl.style.cssText = 'grid-column:1/-1;font-size:9px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;margin-top:4px';
-  endLbl.textContent = 'Fin';
-
-  range.style.cssText = 'display:flex;flex-direction:column;gap:0';
-  const sg = document.createElement('div');
-  sg.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
-  sg.append(sw.wrap, sd.wrap);
-  const eg = document.createElement('div');
-  eg.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
-  eg.append(ew.wrap, ed.wrap);
-
-  range.append(startLbl, sg, endLbl, eg);
+  refreshStages();
 
   // ── Type ──────────────────────────────────────────────────
   const typeRow = document.createElement('div');
@@ -898,7 +985,7 @@ function renderTaskCard(t) {
   };
 
   noteWrap.append(noteToggle, noteField);
-  card.append(hdr, range, typeRow, noteWrap);
+  card.append(hdr, stagesContainer, typeRow, noteWrap);
   list.appendChild(card);
 }
 
@@ -1150,8 +1237,9 @@ function drawGantt(canvas, data, scale) {
     }
 
     // ── BAR or MILESTONE ─────────────────────────────────────
-    const s = Math.max(0, task.startDay - 1); // 0-indexed
-    const e = Math.min(totalDays - 1, task.endDay - 1);
+    (task.stages || [{ startDay: task.startDay, endDay: task.endDay }]).forEach(stage => {
+    const s = Math.max(0, stage.startDay - 1); // 0-indexed
+    const e = Math.min(totalDays - 1, stage.endDay - 1);
 
     if (task.type === 'milestone') {
       // Diamond
@@ -1207,6 +1295,7 @@ function drawGantt(canvas, data, scale) {
       roundRect(ctx, bx, by, bw, bh, rad);
       ctx.stroke();
     }
+    }); // stages
   });
 
   // ── LEFT BORDER ───────────────────────────────────────────
@@ -1387,9 +1476,10 @@ async function buildPDF() {
     doc.text(lbl, MARGIN + 2, ry + ROW_H/2 + 2.2);
 
     // Bar / Milestone
-    const s = Math.max(0, task.startDay - 1);
-    const e = Math.min(data.totalDays - 1, task.endDay - 1);
     const col = hexToRgb(task.color);
+    (task.stages || [{ startDay: task.startDay, endDay: task.endDay }]).forEach(stage => {
+    const s = Math.max(0, stage.startDay - 1);
+    const e = Math.min(data.totalDays - 1, stage.endDay - 1);
 
     if (task.type === 'milestone') {
       const mx = MARGIN + LABEL_W + s * DAY_W + DAY_W/2;
@@ -1415,6 +1505,7 @@ async function buildPDF() {
         }
       }
     }
+    }); // stages
   });
 
   // ── GRID LINES ────────────────────────────────────────────
