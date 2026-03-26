@@ -271,6 +271,35 @@ input[readonly] { background: var(--g100); color: var(--g500); }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.ok { background: #237A47; }
 .toast.err { background: #B71C1C; }
+.live-total {
+  margin-top: 14px;
+  border-top: 1.5px solid var(--orange-border);
+  padding-top: 12px;
+  display: none;
+}
+.live-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 4px;
+}
+.live-total-lbl {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--g500);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.live-total-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 15px;
+  color: var(--g700);
+}
+.live-total-row.is-main .live-total-lbl { color: var(--orange-d); }
+.live-total-row.is-main .live-total-val {
+  font-size: 22px;
+  color: var(--orange-d);
+}
 @media(max-width:580px){
   .row-2,.row-3 { grid-template-columns: 1fr; }
   .card { padding: 18px 14px; }
@@ -369,6 +398,22 @@ input[readonly] { background: var(--g100); color: var(--g500); }
       </div>
     </div>
     <button class="btn-add" onclick="addRow()">＋ Agregar concepto</button>
+
+    <div class="live-total" id="live-total">
+      <div class="live-total-row" id="lt-sub-row" style="display:none">
+        <span class="live-total-lbl">Subtotal</span>
+        <span class="live-total-val" id="lt-sub"></span>
+      </div>
+      <div class="live-total-row" id="lt-iva-row" style="display:none">
+        <span class="live-total-lbl">IVA (16%)</span>
+        <span class="live-total-val" id="lt-iva"></span>
+      </div>
+      <div class="live-total-row is-main">
+        <span class="live-total-lbl">Total</span>
+        <span class="live-total-val" id="lt-total"></span>
+      </div>
+    </div>
+
     <div class="serie-box" id="serie-box">
       <div class="card-title" style="margin-bottom:12px">Total por temporada</div>
       <div class="row row-3">
@@ -392,7 +437,7 @@ input[readonly] { background: var(--g100); color: var(--g500); }
     <div class="card-title">Opciones y notas</div>
     <div class="check-row">
       <label class="chk-label">
-        <input type="checkbox" id="opt-iva"> Mostrar IVA 16%
+        <input type="checkbox" id="opt-iva" onchange="updateLiveTotal()"> Mostrar IVA 16%
       </label>
       <label class="chk-label">
         <input type="checkbox" id="opt-nota-iva" checked> *IVA no incluido
@@ -525,6 +570,36 @@ function recalcSerie() {
   if (!el) return;
   if (caps > 0) el.value = fmtNum(getRunTotal() * caps);
   else el.value = '';
+  updateLiveTotal();
+}
+
+function updateLiveTotal() {
+  const total = getRunTotal();
+  const wrap  = document.getElementById('live-total');
+  if (!wrap) return;
+
+  wrap.style.display = total > 0 ? '' : 'none';
+
+  const showIva  = document.getElementById('opt-iva')?.checked;
+  const subRow   = document.getElementById('lt-sub-row');
+  const ivaRow   = document.getElementById('lt-iva-row');
+  const elSub    = document.getElementById('lt-sub');
+  const elIva    = document.getElementById('lt-iva');
+  const elTotal  = document.getElementById('lt-total');
+
+  if (showIva) {
+    const iva  = total * 0.16;
+    const gran = total + iva;
+    elSub.textContent   = '$\u00a0' + fmtNum(total);
+    elIva.textContent   = '$\u00a0' + fmtNum(iva);
+    elTotal.textContent = '$\u00a0' + fmtNum(gran);
+    subRow.style.display = '';
+    ivaRow.style.display = '';
+  } else {
+    elTotal.textContent  = '$\u00a0' + fmtNum(total);
+    subRow.style.display = 'none';
+    ivaRow.style.display = 'none';
+  }
 }
 
 function fmtNum(n) {
