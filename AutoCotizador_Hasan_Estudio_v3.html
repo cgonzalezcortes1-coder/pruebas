@@ -271,34 +271,13 @@ input[readonly] { background: var(--g100); color: var(--g500); }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.ok { background: #237A47; }
 .toast.err { background: #B71C1C; }
-.live-total {
-  margin-top: 14px;
-  border-top: 1.5px solid var(--orange-border);
-  padding-top: 12px;
-  display: none;
-}
-.live-total-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 3px 4px;
-}
-.live-total-lbl {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--g500);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-.live-total-val {
-  font-family: 'DM Serif Display', serif;
-  font-size: 15px;
-  color: var(--g700);
-}
-.live-total-row.is-main .live-total-lbl { color: var(--orange-d); }
-.live-total-row.is-main .live-total-val {
-  font-size: 22px;
+.field-total input[readonly] {
+  background: var(--orange-pale);
   color: var(--orange-d);
+  font-weight: 700;
+  font-size: 15px;
+  border-color: var(--orange-border);
+  text-align: right;
 }
 @media(max-width:580px){
   .row-2,.row-3 { grid-template-columns: 1fr; }
@@ -399,18 +378,14 @@ input[readonly] { background: var(--g100); color: var(--g500); }
     </div>
     <button class="btn-add" onclick="addRow()">＋ Agregar concepto</button>
 
-    <div class="live-total" id="live-total">
-      <div class="live-total-row" id="lt-sub-row" style="display:none">
-        <span class="live-total-lbl">Subtotal</span>
-        <span class="live-total-val" id="lt-sub"></span>
+    <div class="row row-2" style="margin-top:14px">
+      <div class="field field-total">
+        <label>Total</label>
+        <input type="text" id="f-live-total" readonly placeholder="$0">
       </div>
-      <div class="live-total-row" id="lt-iva-row" style="display:none">
-        <span class="live-total-lbl">IVA (16%)</span>
-        <span class="live-total-val" id="lt-iva"></span>
-      </div>
-      <div class="live-total-row is-main">
-        <span class="live-total-lbl">Total</span>
-        <span class="live-total-val" id="lt-total"></span>
+      <div class="field field-total" id="lt-iva-field" style="display:none">
+        <label>IVA (16%)</label>
+        <input type="text" id="f-live-iva" readonly placeholder="$0">
       </div>
     </div>
 
@@ -567,38 +542,26 @@ function getRunTotal() {
 function recalcSerie() {
   const caps = parseInt(document.getElementById('f-caps')?.value || 0);
   const el = document.getElementById('f-serie-total');
-  if (!el) return;
-  if (caps > 0) el.value = fmtNum(getRunTotal() * caps);
-  else el.value = '';
+  if (el) {
+    if (caps > 0) el.value = fmtNum(getRunTotal() * caps);
+    else el.value = '';
+  }
   updateLiveTotal();
 }
 
 function updateLiveTotal() {
-  const total = getRunTotal();
-  const wrap  = document.getElementById('live-total');
-  if (!wrap) return;
-
-  wrap.style.display = total > 0 ? 'block' : 'none';
-
+  const total    = getRunTotal();
   const showIva  = document.getElementById('opt-iva')?.checked;
-  const subRow   = document.getElementById('lt-sub-row');
-  const ivaRow   = document.getElementById('lt-iva-row');
-  const elSub    = document.getElementById('lt-sub');
-  const elIva    = document.getElementById('lt-iva');
-  const elTotal  = document.getElementById('lt-total');
+  const elTotal  = document.getElementById('f-live-total');
+  const elIva    = document.getElementById('f-live-iva');
+  const ivaField = document.getElementById('lt-iva-field');
 
-  if (showIva) {
-    const iva  = total * 0.16;
-    const gran = total + iva;
-    elSub.textContent   = '$\u00a0' + fmtNum(total);
-    elIva.textContent   = '$\u00a0' + fmtNum(iva);
-    elTotal.textContent = '$\u00a0' + fmtNum(gran);
-    subRow.style.display = '';
-    ivaRow.style.display = '';
+  if (elTotal) elTotal.value = total > 0 ? '$ ' + fmtNum(total) : '';
+  if (showIva && total > 0) {
+    if (elIva)    elIva.value = '$ ' + fmtNum(total * 0.16);
+    if (ivaField) ivaField.style.display = '';
   } else {
-    elTotal.textContent  = '$\u00a0' + fmtNum(total);
-    subRow.style.display = 'none';
-    ivaRow.style.display = 'none';
+    if (ivaField) ivaField.style.display = 'none';
   }
 }
 
