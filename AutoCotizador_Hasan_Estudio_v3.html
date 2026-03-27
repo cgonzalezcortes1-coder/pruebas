@@ -578,7 +578,7 @@ function updateLiveTotal() {
   const wrap  = document.getElementById('live-total');
   if (!wrap) return;
 
-  wrap.style.display = total > 0 ? '' : 'none';
+  wrap.style.display = total > 0 ? 'block' : 'none';
 
   const showIva  = document.getElementById('opt-iva')?.checked;
   const subRow   = document.getElementById('lt-sub-row');
