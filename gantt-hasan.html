@@ -8,8 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
-  --orange: #fa8408;
-  --orange-d: #ff7a17;
+  --orange: #ff7a20;
+  --orange-d: #b4580e;
   --orange-pale: #fef0e7;
   --orange-border: #ff8403;
   --g900: #1C1C1C;
@@ -1259,7 +1259,7 @@ function drawGantt(canvas, data, scale) {
   ctx.fillRect(0, 0, TW, TH);
 
   // ── TITLE AREA ────────────────────────────────────────────
-  ctx.fillStyle = '#fa8408';
+  ctx.fillStyle = '#ff7a20';
   ctx.fillRect(0, 0, TW, TITLE_H);
 
   // Title text
@@ -1482,7 +1482,7 @@ function drawGantt(canvas, data, scale) {
   });
 
   // ── LEFT BORDER ───────────────────────────────────────────
-  ctx.strokeStyle = '#fa8408';
+  ctx.strokeStyle = '#ff7a20';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(0, 0);
