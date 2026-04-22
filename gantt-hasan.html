@@ -8,10 +8,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
-  --orange: #F5A623;
-  --orange-d: #D9880A;
-  --orange-pale: #FEF5E7;
-  --orange-border: #FADEA0;
+  --orange: #fa8408;
+  --orange-d: #ff7a17;
+  --orange-pale: #fef0e7;
+  --orange-border: #ff8403;
   --g900: #1C1C1C;
   --g700: #484848;
   --g500: #8A8A8A;
@@ -41,7 +41,7 @@ body {
   align-items: center;
   gap: 14px;
   position: sticky; top: 0; z-index: 200;
-  box-shadow: 0 2px 14px rgba(245,166,35,0.13);
+  box-shadow: 0 2px 14px rgba(250,132,8,0.13);
 }
 .tb-name {
   font-family: 'DM Serif Display', serif;
@@ -131,7 +131,7 @@ input, select {
 }
 input:focus, select:focus {
   border-color: var(--orange);
-  box-shadow: 0 0 0 3px rgba(245,166,35,.10);
+  box-shadow: 0 0 0 3px rgba(250,132,8,.10);
 }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
@@ -472,7 +472,7 @@ input:focus, select:focus {
   border-radius: 8px;
   cursor: pointer;
   transition: all .2s;
-  box-shadow: 0 3px 14px rgba(245,166,35,.35);
+  box-shadow: 0 3px 14px rgba(250,132,8,.35);
   display: flex; align-items: center; gap: 6px;
 }
 .btn-pdf:hover { background: var(--orange-d); transform: translateY(-1px); }
@@ -510,7 +510,7 @@ input:focus, select:focus {
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: auto;
-  border: 1px solid rgba(245,166,35,0.12);
+  border: 1px solid rgba(250,132,8,0.12);
   max-width: 100%;
   scrollbar-width: thin;
   scrollbar-color: var(--orange-border) transparent;
@@ -1259,7 +1259,7 @@ function drawGantt(canvas, data, scale) {
   ctx.fillRect(0, 0, TW, TH);
 
   // ── TITLE AREA ────────────────────────────────────────────
-  ctx.fillStyle = '#F5A623';
+  ctx.fillStyle = '#fa8408';
   ctx.fillRect(0, 0, TW, TITLE_H);
 
   // Title text
@@ -1316,7 +1316,7 @@ function drawGantt(canvas, data, scale) {
   });
 
   // Vertical grid lines (week separators)
-  ctx.strokeStyle = 'rgba(245,166,35,0.30)';
+  ctx.strokeStyle = 'rgba(250,132,8,0.30)';
   ctx.lineWidth = 1;
   weekStarts.forEach(ws => {
     const x = LABEL_W + ws.col * DAY_W;
@@ -1482,7 +1482,7 @@ function drawGantt(canvas, data, scale) {
   });
 
   // ── LEFT BORDER ───────────────────────────────────────────
-  ctx.strokeStyle = '#F5A623';
+  ctx.strokeStyle = '#fa8408';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(0, 0);
@@ -1495,7 +1495,7 @@ function drawGantt(canvas, data, scale) {
   ctx.strokeRect(0, 0, TW, TH);
 
   // ── LABEL / GRID DIVIDER ─────────────────────────────────
-  ctx.strokeStyle = 'rgba(245,166,35,0.25)';
+  ctx.strokeStyle = 'rgba(250,132,8,0.25)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(LABEL_W, TITLE_H);
